@@ -17,11 +17,12 @@ public class CdkStack extends Stack {
         super(scope, "slapovi-zrmanje-be", props);
 
         // API Gateway and Lambda
-        final SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-api",
+        final SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-lambda",
                 FunctionProps.builder()
+                        .functionName("slapovi-zrmanje-lambda")
                         .runtime(Runtime.JAVA_17)
                         .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./api/target/api.jar").toString()))
-                        .handler("com.levi9.snapstart.api.StreamLambdaHandler")
+                        .handler("com.slapovizrmanje.api.StreamLambdaHandler")
                         .memorySize(2048)
                         .timeout(Duration.seconds(30))
                         .build());
