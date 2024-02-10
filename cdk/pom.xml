@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.slapovizrmanje</groupId>
-        <artifactId>slapovizrmanje-be</artifactId>
+        <artifactId>slapovi-zrmanje-be</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>slapovizrmanje-cdk</artifactId>
+    <artifactId>cdk</artifactId>
     <dependencies>
         <dependency>
             <groupId>software.amazon.awscdk</groupId>

@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.slapovizrmanje</groupId>
-        <artifactId>slapovizrmanje-be</artifactId>
+        <artifactId>slapovi-zrmanje-be</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>slapovizrmanje-api</artifactId>
+    <artifactId>api</artifactId>
     <properties>
         <spring-boot.version>3.1.0</spring-boot.version>
         <commons.version>0.0.1-SNAPSHOT</commons.version>
@@ -28,6 +28,23 @@
         <dependency>
             <groupId>com.amazonaws.serverless</groupId>
             <artifactId>aws-serverless-java-container-springboot3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>dynamodb-enhanced</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
         </dependency>
     </dependencies>
     <build>
