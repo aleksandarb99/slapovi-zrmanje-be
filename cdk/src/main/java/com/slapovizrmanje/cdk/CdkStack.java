@@ -9,15 +9,21 @@ import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.PolicyStatementProps;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
-import software.amazon.awscdk.services.lambda.Code;
-import software.amazon.awscdk.services.lambda.FunctionProps;
+import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.lambda.eventsources.DynamoEventSource;
+import software.amazon.awscdk.services.lambda.eventsources.SqsEventSource;
+import software.amazon.awscdk.services.sqs.Queue;
 import software.constructs.Construct;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public class CdkStack extends Stack {
+
+    private Table requestTable = null;
+
     public CdkStack(final Construct scope, final StackProps props) {
         super(scope, "slapovi-zrmanje-be", props);
 
@@ -52,6 +58,63 @@ public class CdkStack extends Stack {
         final RestApi restApi = new RestApi(this, "slapovi-zrmanje-rest-api");
 
         restApi.getRoot().addProxy(proxyR);
+
+        // Email Simple Queue Service (SQS)
+        final String emailQueueName = "email-notifications-sqs-queue";
+        final Queue emailQueue = Queue.Builder
+                .create(this, emailQueueName)
+                .queueName(emailQueueName)
+//                .deadLetterQueue()
+                .visibilityTimeout(Duration.seconds(30))
+                .retentionPeriod(Duration.days(14))
+                .build();
+
+        // Email Handler Lambda
+        final String emailLambdaName = "email-lambda";
+        // TODO make it snapstart
+        Function emailLambda = new Function(this, emailLambdaName,
+                FunctionProps.builder()
+                        .functionName(emailLambdaName)
+                        .runtime(Runtime.JAVA_17)
+                        .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./functions/target/functions.jar").toString()))
+                        .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
+                        .environment(Map.of(
+                                "SPRING_CLOUD_FUNCTION_DEFINITION", "sendEmailNotification",
+                                "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                        ))
+                        .memorySize(512)
+                        .timeout(Duration.seconds(15))
+                        .build());
+
+        final SqsEventSource emailSqsEventSource = SqsEventSource.Builder.create(emailQueue).build();
+        emailLambda.addEventSource(emailSqsEventSource);
+
+        // Dynamo Handler Lambda
+        final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
+        // TODO make it snapstart
+        Function dynamoTriggerLambda = new Function(this, dynamoLambdaName,
+                FunctionProps.builder()
+                        .functionName(dynamoLambdaName)
+                        .runtime(Runtime.JAVA_17)
+                        .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./functions/target/functions.jar").toString()))
+                        .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
+                        .environment(Map.of(
+                                "SPRING_CLOUD_FUNCTION_DEFINITION", "handleDynamoStreamEvent",
+                                "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                        ))
+                        .memorySize(512)
+                        .timeout(Duration.seconds(15))
+                        .build());
+
+        final DynamoEventSource dynamoEventSource = DynamoEventSource.Builder
+                .create(requestTable)
+                .batchSize(1)   // TODO Batch size check
+                .startingPosition(StartingPosition.LATEST)  // TODO Check this latest
+//                .retryAttempts()
+//                .onFailure()  // TODO Check other properties
+                .build();
+        dynamoTriggerLambda.addEventSource(dynamoEventSource);
+        dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(requestTable.getTableStreamArn(), "AllowDynamoStreams"));
     }
 
     private String createRequestTable(Construct scope) {
@@ -63,34 +126,17 @@ public class CdkStack extends Stack {
                 .name("id")
                 .type(AttributeType.STRING)
                 .build();
-        final Table requestTable = new Table(scope, "request-table", TableProps.builder()
+        requestTable = new Table(scope, "request-table", TableProps.builder()
                 .tableName("request-table")
                 .partitionKey(email)
                 .sortKey(id)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .stream(StreamViewType.NEW_IMAGE)
                 .build());
-//        requestTable.addGlobalSecondaryIndex(GlobalSecondaryIndexProps.builder()
-//                .indexName("GS1")
-//                .partitionKey(sk)
-//                .sortKey(pk)
-//                .projectionType(ProjectionType.ALL)
-//                .build());
-//
-//        final Attribute email = Attribute.builder()
-//                .name("email")
-//                .type(AttributeType.STRING)
-//                .build();
-//        celebrateTable.addGlobalSecondaryIndex(GlobalSecondaryIndexProps.builder()
-//                .indexName("EmailGSI")
-//                .partitionKey(email)
-//                .sortKey(sk)
-//                .projectionType(ProjectionType.ALL)
-//                .build());
         return requestTable.getTableArn();
     }
 
-    public static PolicyStatement getDynamoReadStatement(final String tableArn, final String sid) {
+    private PolicyStatement getDynamoReadStatement(final String tableArn, final String sid) {
         return new PolicyStatement(PolicyStatementProps.builder()
                 .sid(sid)
                 .effect(Effect.ALLOW)
@@ -99,12 +145,21 @@ public class CdkStack extends Stack {
                 .build());
     }
 
-    public static PolicyStatement getDynamoWriteStatement(final String tableArn, final String sid) {
+    private PolicyStatement getDynamoWriteStatement(final String tableArn, final String sid) {
         return new PolicyStatement(PolicyStatementProps.builder()
                 .sid(sid)
                 .effect(Effect.ALLOW)
                 .actions(List.of("dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:DeleteItem", "dynamodb:BatchWriteItem"))
                 .resources(List.of(tableArn))
+                .build());
+    }
+
+    private PolicyStatement getDynamoStreamsStatement(final String streamArn, final String sid) {
+        return new PolicyStatement(PolicyStatementProps.builder()
+                .sid(sid)
+                .effect(Effect.ALLOW)
+                .actions(List.of("dynamodb:DescribeStream", "dynamodb:GetRecords", "dynamodb:GetShardIterator", "dynamodb:ListStreams"))
+                .resources(List.of(streamArn))
                 .build());
     }
 }
