@@ -9,11 +9,14 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @AllArgsConstructor
 @DynamoDbBean
 @Setter
+@EqualsAndHashCode
+@ToString
 public class LodgingForCamp {
   private int tent;
   private int caravan;
   private int car;
   private int sleepingBag;
+
   @DynamoDbAttribute("tent")
   public int getTent() {
     return tent;
@@ -26,7 +29,7 @@ public class LodgingForCamp {
   public int getCar() {
     return car;
   }
-  @DynamoDbAttribute("sleeping_bug")
+  @DynamoDbAttribute("sleeping_bag")
   public int getSleepingBag() {
     return sleepingBag;
   }

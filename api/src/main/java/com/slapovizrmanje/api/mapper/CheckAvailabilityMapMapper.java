@@ -23,7 +23,7 @@ public class CheckAvailabilityMapMapper {
             .car(Integer.parseInt(item.get("lodging").m().get("car").n()))
             .caravan(Integer.parseInt(item.get("lodging").m().get("caravan").n()))
             .tent(Integer.parseInt(item.get("lodging").m().get("tent").n()))
-            .sleepingBag(Integer.parseInt(item.get("lodging").m().get("sleepingBag").n()))
+            .sleepingBag(Integer.parseInt(item.get("lodging").m().get("sleeping_bag").n()))
             .build();
 
     return CheckAvailabilityForCamp.builder()
@@ -31,7 +31,7 @@ public class CheckAvailabilityMapMapper {
             .email(item.get("email").s())
             .firstName(item.get("first_name").s())
             .lastName(item.get("last_name").s())
-            .isVerified(item.get("is_verified").bool())
+            .isVerified(item.get("verified").bool())
             .guests(guest)
             .lodging(lodging)
             .powerSupply(item.get("power_supply").bool())

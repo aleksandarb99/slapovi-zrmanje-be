@@ -9,6 +9,8 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @AllArgsConstructor
 @DynamoDbBean
 @Setter
+@EqualsAndHashCode
+@ToString
 public class GuestsForCamp {
   private int adults;
   private int children;

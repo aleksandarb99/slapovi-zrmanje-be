@@ -11,9 +11,11 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
 @Configuration
 public class DynamoDBConfig {
+
   @Bean
   public DynamoDbEnhancedClient amazonDynamoDB() {
-    return DynamoDbEnhancedClient.builder().dynamoDbClient(dynamoDbClient())
+    return DynamoDbEnhancedClient.builder()
+            .dynamoDbClient(dynamoDbClient())
             .build();
   }
 
@@ -23,8 +25,9 @@ public class DynamoDBConfig {
             .region(Region.of("eu-central-1"))
             .build();
   }
+
   @Bean
-  public DynamoDbTable<CheckAvailabilityForCamp> requestTable() {
+  public DynamoDbTable<CheckAvailabilityForCamp> campRequestTable() {
     return amazonDynamoDB().table("request-table", TableSchema.fromBean(CheckAvailabilityForCamp.class));
   }
 }

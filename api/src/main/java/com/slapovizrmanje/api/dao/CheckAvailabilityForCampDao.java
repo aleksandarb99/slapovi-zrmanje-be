@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class CheckAvailabilityForCampDao {
-  private final DynamoDbTable<CheckAvailabilityForCamp> requestTable;
+  private final DynamoDbTable<CheckAvailabilityForCamp> campRequestTable;
   private final CheckAvailabilityMapMapper checkAvailabilityMapMapper;
   private final String tableName = "request-table";
   private final DynamoDbClient dynamoDbClient;
@@ -59,11 +59,11 @@ public class CheckAvailabilityForCampDao {
 //  }
   public CheckAvailabilityForCamp create(
           final CheckAvailabilityForCamp checkAvailabilityForCamp) {
-    requestTable.putItem(checkAvailabilityForCamp);
+    campRequestTable.putItem(checkAvailabilityForCamp);
     return checkAvailabilityForCamp;
   }
   public CheckAvailabilityForCamp update(final CheckAvailabilityForCamp checkAvailabilityForCamp) {
-    requestTable.putItem(checkAvailabilityForCamp);
+    campRequestTable.putItem(checkAvailabilityForCamp);
     return checkAvailabilityForCamp;
   }
 }

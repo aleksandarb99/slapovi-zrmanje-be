@@ -13,17 +13,21 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @DynamoDbBean
 @Setter
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString
 public class CheckAvailabilityForCamp {
+  // TODO Check when we add other entities in the same table, if he reserved for camp, he should be able to reserve for room e.g.
   private String id;
+  @EqualsAndHashCode.Include
   private String email;
   private String firstName;
   private String lastName;
   private GuestsForCamp guests;
   private LodgingForCamp lodging;
   private boolean powerSupply;
+  @EqualsAndHashCode.Include
   private LocalDate startDate;
+  @EqualsAndHashCode.Include
   private LocalDate endDate;
   private boolean isVerified;
   private long createdAt;
