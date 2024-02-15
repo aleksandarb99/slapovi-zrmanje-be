@@ -11,11 +11,12 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @Setter
 @EqualsAndHashCode
 @ToString
-public class GuestsForCamp {
+public class CampGuests {
   private int adults;
   private int children;
   private int infants;
   private int pets;
+
   @DynamoDbAttribute("adults")
   public int getAdults() {
     return adults;

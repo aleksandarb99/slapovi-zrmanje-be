@@ -1,32 +1,43 @@
 package com.slapovizrmanje.api.mapper;
 
-import com.slapovizrmanje.api.model.CheckAvailabilityForCamp;
-import com.slapovizrmanje.api.model.GuestsForCamp;
-import com.slapovizrmanje.api.model.LodgingForCamp;
-import org.springframework.stereotype.Component;
+import com.slapovizrmanje.api.dto.CampGuestsDTO;
+import com.slapovizrmanje.api.dto.CampLodgingDTO;
+import com.slapovizrmanje.api.dto.CampRequestDTO;
+import com.slapovizrmanje.api.model.CampGuests;
+import com.slapovizrmanje.api.model.CampLodging;
+import com.slapovizrmanje.api.model.CampRequest;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.time.LocalDate;
 import java.util.Map;
 
-@Component
-public class CheckAvailabilityMapMapper {
-  public CheckAvailabilityForCamp toEntity(Map<String, AttributeValue> item) {
-    GuestsForCamp guest = GuestsForCamp.builder()
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.FIELD)
+public interface CampRequestMapper {
+
+  CampRequest toEntity(CampRequestDTO campRequestDTO);
+
+  CampGuests toEntity(CampGuestsDTO campGuestsDTO);
+
+  CampLodging toEntity(CampLodgingDTO campLodgingDTO);
+
+  default CampRequest toEntity(Map<String, AttributeValue> item) {
+    CampGuests guest = CampGuests.builder()
             .adults(Integer.parseInt(item.get("guests").m().get("adults").n()))
             .children(Integer.parseInt(item.get("guests").m().get("children").n()))
             .infants(Integer.parseInt(item.get("guests").m().get("infants").n()))
             .pets(Integer.parseInt(item.get("guests").m().get("pets").n()))
             .build();
 
-    LodgingForCamp lodging = LodgingForCamp.builder()
+    CampLodging lodging = CampLodging.builder()
             .car(Integer.parseInt(item.get("lodging").m().get("car").n()))
             .caravan(Integer.parseInt(item.get("lodging").m().get("caravan").n()))
             .tent(Integer.parseInt(item.get("lodging").m().get("tent").n()))
             .sleepingBag(Integer.parseInt(item.get("lodging").m().get("sleeping_bag").n()))
             .build();
 
-    return CheckAvailabilityForCamp.builder()
+    return CampRequest.builder()
             .id(item.get("id").s())
             .email(item.get("email").s())
             .firstName(item.get("first_name").s())

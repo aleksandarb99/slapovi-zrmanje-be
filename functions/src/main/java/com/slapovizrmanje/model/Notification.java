@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class Notification {
     private String emailType;
     private String emailAddress;
+    private String recordId;
 }

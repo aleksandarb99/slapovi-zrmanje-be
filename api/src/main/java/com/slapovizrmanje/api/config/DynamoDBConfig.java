@@ -1,6 +1,6 @@
 package com.slapovizrmanje.api.config;
 
-import com.slapovizrmanje.api.model.CheckAvailabilityForCamp;
+import com.slapovizrmanje.api.model.CampRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -22,12 +22,12 @@ public class DynamoDBConfig {
   @Bean
   public DynamoDbClient dynamoDbClient() {
     return DynamoDbClient.builder()
-            .region(Region.of("eu-central-1"))
+            .region(Region.EU_CENTRAL_1)
             .build();
   }
 
   @Bean
-  public DynamoDbTable<CheckAvailabilityForCamp> campRequestTable() {
-    return amazonDynamoDB().table("request-table", TableSchema.fromBean(CheckAvailabilityForCamp.class));
+  public DynamoDbTable<CampRequest> campRequestTable() {
+    return amazonDynamoDB().table("request-table", TableSchema.fromBean(CampRequest.class));
   }
 }

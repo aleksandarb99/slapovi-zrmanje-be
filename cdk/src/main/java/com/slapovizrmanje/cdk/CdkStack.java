@@ -3,16 +3,25 @@ package com.slapovizrmanje.cdk;
 import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
-import software.amazon.awscdk.services.apigateway.*;
+import software.amazon.awscdk.services.apigateway.LambdaIntegration;
+import software.amazon.awscdk.services.apigateway.ProxyResourceOptions;
+import software.amazon.awscdk.services.apigateway.RestApi;
+import software.amazon.awscdk.services.cloudwatch.Alarm;
+import software.amazon.awscdk.services.cloudwatch.ComparisonOperator;
+import software.amazon.awscdk.services.cloudwatch.actions.SnsAction;
 import software.amazon.awscdk.services.dynamodb.*;
 import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.PolicyStatementProps;
 import software.amazon.awscdk.services.iam.ServicePrincipal;
-import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.lambda.Runtime;
+import software.amazon.awscdk.services.lambda.*;
 import software.amazon.awscdk.services.lambda.eventsources.DynamoEventSource;
+import software.amazon.awscdk.services.lambda.eventsources.SqsDlq;
 import software.amazon.awscdk.services.lambda.eventsources.SqsEventSource;
+import software.amazon.awscdk.services.sns.Topic;
+import software.amazon.awscdk.services.sns.subscriptions.EmailSubscription;
+import software.amazon.awscdk.services.sqs.DeadLetterQueue;
 import software.amazon.awscdk.services.sqs.Queue;
 import software.constructs.Construct;
 
@@ -59,14 +68,28 @@ public class CdkStack extends Stack {
 
         restApi.getRoot().addProxy(proxyR);
 
+        // Email Dead Letter Queue
+        final String emailDlQueueName = "email-notifications-dl-queue";
+        final Queue emailDlQueue = Queue.Builder
+                .create(this, emailDlQueueName)
+                .queueName(emailDlQueueName)
+                .retentionPeriod(Duration.days(14))
+                .build();
+
+        // Configure dead-letter queue settings
+        final DeadLetterQueue deadLetterQueueConfiguration = DeadLetterQueue.builder()
+                .queue(emailDlQueue)
+                // TODO increase if needed
+                .maxReceiveCount(1) // Maximum number of receives before moving to email dead letter queue
+                .build();
+
         // Email Simple Queue Service (SQS)
         final String emailQueueName = "email-notifications-sqs-queue";
         final Queue emailQueue = Queue.Builder
                 .create(this, emailQueueName)
                 .queueName(emailQueueName)
-//                .deadLetterQueue()
+                .deadLetterQueue(deadLetterQueueConfiguration)
                 .visibilityTimeout(Duration.seconds(30))
-                .retentionPeriod(Duration.days(14))
                 .build();
 
         // Email Handler Lambda
@@ -86,8 +109,11 @@ public class CdkStack extends Stack {
                         .timeout(Duration.seconds(15))
                         .build());
 
-        final SqsEventSource emailSqsEventSource = SqsEventSource.Builder.create(emailQueue).build();
+        final SqsEventSource emailSqsEventSource = SqsEventSource.Builder
+                .create(emailQueue)
+                .build();
         emailLambda.addEventSource(emailSqsEventSource);
+        emailLambda.grantInvoke(new ServicePrincipal("lambda.amazonaws.com"));
 
         // Dynamo Handler Lambda
         final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
@@ -106,15 +132,50 @@ public class CdkStack extends Stack {
                         .timeout(Duration.seconds(15))
                         .build());
 
+        // Stream Event Dead Letter Queue Service (DlSQS)
+        final String streamEventDlQueueName = "stream-event-dl-queue";
+        final Queue streamEventQueue = Queue.Builder
+                .create(this, streamEventDlQueueName)
+                .queueName(streamEventDlQueueName)
+                .retentionPeriod(Duration.days(14))
+                .build();
+        SqsDlq streamEventDlQueue = new SqsDlq(streamEventQueue);
+
         final DynamoEventSource dynamoEventSource = DynamoEventSource.Builder
                 .create(requestTable)
-                .batchSize(1)   // TODO Batch size check
-                .startingPosition(StartingPosition.LATEST)  // TODO Check this latest
-//                .retryAttempts()
-//                .onFailure()  // TODO Check other properties
+                .batchSize(1)
+                .startingPosition(StartingPosition.LATEST)
+                .onFailure(streamEventDlQueue)
+                .retryAttempts(1)
                 .build();
+
         dynamoTriggerLambda.addEventSource(dynamoEventSource);
         dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(requestTable.getTableStreamArn(), "AllowDynamoStreams"));
+        dynamoTriggerLambda.addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
+
+        // Create an Email SNS topic
+        Topic emailSnsTopic = Topic.Builder.create(this, "EmailSnsTopic")
+                .displayName("Email SNS Topic")
+                .topicName("email-sns-topic")
+                .build();
+
+        // Create email subscriptions for devs/ supports
+        EmailSubscription emailSubscription = EmailSubscription.Builder.create("jovansimic995@gmail.com").build();
+        emailSnsTopic.addSubscription(emailSubscription);
+
+        // Create Email Alarm based on messages visible in Email DLQ
+        Alarm emailAlarm = Alarm.Builder
+                .create(this, "EmailAlarm")
+                .alarmName("Email Dead Letter Queue Alarm")
+                .alarmDescription("Alarm Invocation on message being sent to Email DLQ")
+                .datapointsToAlarm(1)
+                .evaluationPeriods(1)
+                .threshold(20)
+                .metric(emailDlQueue.metricApproximateNumberOfMessagesVisible())
+                .comparisonOperator(ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD)
+                .build();
+
+        emailAlarm.addAlarmAction(new SnsAction(emailSnsTopic));
     }
 
     private String createRequestTable(Construct scope) {
@@ -160,6 +221,15 @@ public class CdkStack extends Stack {
                 .effect(Effect.ALLOW)
                 .actions(List.of("dynamodb:DescribeStream", "dynamodb:GetRecords", "dynamodb:GetShardIterator", "dynamodb:ListStreams"))
                 .resources(List.of(streamArn))
+                .build());
+    }
+
+    private static PolicyStatement getSqsGetSendStatement(final String queueArn, final String sid) {
+        return new PolicyStatement(PolicyStatementProps.builder()
+                .sid(sid)
+                .effect(Effect.ALLOW)
+                .actions(List.of("sqs:SendMessage", "sqs:GetQueueUrl", "sqs:GetQueueAttributes"))
+                .resources(List.of(queueArn))
                 .build());
     }
 }

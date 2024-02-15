@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @Setter
 @EqualsAndHashCode
 @ToString
-public class LodgingForCamp {
+public class CampLodging {
   private int tent;
   private int caravan;
   private int car;
@@ -21,14 +21,17 @@ public class LodgingForCamp {
   public int getTent() {
     return tent;
   }
+
   @DynamoDbAttribute("caravan")
   public int getCaravan() {
     return caravan;
   }
+
   @DynamoDbAttribute("car")
   public int getCar() {
     return car;
   }
+
   @DynamoDbAttribute("sleeping_bag")
   public int getSleepingBag() {
     return sleepingBag;
