@@ -9,24 +9,30 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @AllArgsConstructor
 @DynamoDbBean
 @Setter
-public class LodgingForCamp {
+@EqualsAndHashCode
+@ToString
+public class CampLodging {
   private int tent;
   private int caravan;
   private int car;
   private int sleepingBag;
+
   @DynamoDbAttribute("tent")
   public int getTent() {
     return tent;
   }
+
   @DynamoDbAttribute("caravan")
   public int getCaravan() {
     return caravan;
   }
+
   @DynamoDbAttribute("car")
   public int getCar() {
     return car;
   }
-  @DynamoDbAttribute("sleeping_bug")
+
+  @DynamoDbAttribute("sleeping_bag")
   public int getSleepingBag() {
     return sleepingBag;
   }

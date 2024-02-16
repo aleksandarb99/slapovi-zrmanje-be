@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.dto;
+package com.slapovizrmanje.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,9 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class LodgingForCampDto {
-  private int tent;
-  private int caravan;
-  private int car;
-  private int sleepingBag;
+public class Notification {
+    private String emailType;
+    private String emailAddress;
+    private String recordId;
 }

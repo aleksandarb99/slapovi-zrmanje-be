@@ -8,22 +8,26 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortK
 
 import java.time.LocalDate;
 
+@Setter
 @Builder
+@ToString
+@DynamoDbBean
 @NoArgsConstructor
 @AllArgsConstructor
-@DynamoDbBean
-@Setter
-@EqualsAndHashCode
-@ToString
-public class CheckAvailabilityForCamp {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class CampRequest {
+  // TODO Check when we add other entities in the same table, if he reserved for camp, he should be able to reserve for room e.g.
   private String id;
+  @EqualsAndHashCode.Include
   private String email;
   private String firstName;
   private String lastName;
-  private GuestsForCamp guests;
-  private LodgingForCamp lodging;
+  private CampGuests guests;
+  private CampLodging lodging;
   private boolean powerSupply;
+  @EqualsAndHashCode.Include
   private LocalDate startDate;
+  @EqualsAndHashCode.Include
   private LocalDate endDate;
   private boolean isVerified;
   private long createdAt;
@@ -32,6 +36,7 @@ public class CheckAvailabilityForCamp {
   public String getEmail() {
     return email;
   }
+
   @DynamoDbSortKey()
   public String getId() {
     return id;
@@ -48,12 +53,12 @@ public class CheckAvailabilityForCamp {
   }
 
   @DynamoDbAttribute("guests")
-  public GuestsForCamp getGuests() {
+  public CampGuests getGuests() {
     return guests;
   }
 
   @DynamoDbAttribute("lodging")
-  public LodgingForCamp getLodging() {
+  public CampLodging getLodging() {
     return lodging;
   }
 
