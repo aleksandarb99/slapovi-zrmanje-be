@@ -17,6 +17,8 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class EmailNotificationSenderComponent {
 
+//    TODO: Env; Frontend url ce biti
+    private final String url = "https://d3gxkr4tgt0zlg.cloudfront.net";
     private final AmazonSimpleEmailService sesClient;
     private final ObjectMapper objectMapper;
 
@@ -45,8 +47,10 @@ public class EmailNotificationSenderComponent {
         // TODO Consider also responding based on preferable language
         // TODO Maybe also upgrade HTML
         String verificationText = String.format(
-                "Verify your camp reservation: %s%s.",
-                "https://d3gxkr4tgt0zlg.cloudfront.net/camp/verify/",
+                "Verify your camp reservation: %s.",
+                url + "/api/verification/verify?email=" +
+                notification.getEmailAddress() +
+                "&id=" +
                 notification.getRecordId());
         String verificationHTML = String.format(
                 "<html><head></head><body><h1>Hello!</h1><p> %s</p></body></html>",
@@ -57,6 +61,8 @@ public class EmailNotificationSenderComponent {
         Message message = new Message()
                 .withBody(htmlContent)
                 .withSubject(textContent);
+
+//        TODO: Ovde ce biti s sajta naseg, tj domena
         String source = "jovansimic995@gmail.com";
         Destination destination = new Destination().withToAddresses(notification.getEmailAddress());
 

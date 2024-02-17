@@ -25,6 +25,22 @@ public class CampRequestDao {
   private final String tableName = "request-table";
   private final DynamoDbClient dynamoDbClient;
 
+  public List<CampRequest> findByEmailAndIdPair(final String email, String id) {
+    final AttributeValue emailAttribute = AttributeValue.builder()
+            .s(email)
+            .build();
+    final AttributeValue idAttribute = AttributeValue.builder()
+            .s(id)
+            .build();
+    final QueryRequest queryRequest = QueryRequest.builder()
+            .tableName(tableName)
+            .keyConditionExpression("#id = :id AND #email = :email")
+            .expressionAttributeNames(Map.of("#id", "id", "#email", "email"))
+            .expressionAttributeValues(Map.of(":id", idAttribute, ":email", emailAttribute))
+            .build();
+
+    return executeQueryRequestAndMapItems(queryRequest);
+  }
   public List<CampRequest> findByEmail(final String email) {
     final AttributeValue emailAttribute = AttributeValue.builder()
             .s(email)
@@ -35,8 +51,23 @@ public class CampRequestDao {
             .expressionAttributeNames(Map.of("#email", "email"))
             .expressionAttributeValues(Map.of(":email", emailAttribute))
             .build();
-    final QueryResponse queryResponse;
 
+    return executeQueryRequestAndMapItems(queryRequest);
+  }
+
+  public void create(final CampRequest campRequest) {
+    log.info("CAMP REQUEST TABLE - Create camp request.");
+    campRequestTable.putItem(campRequest);
+  }
+
+  public CampRequest update(final CampRequest campRequest) {
+    log.info("CAMP REQUEST TABLE - Update camp request.");
+    campRequestTable.updateItem(campRequest);
+    return campRequest;
+  }
+
+  private List<CampRequest> executeQueryRequestAndMapItems(QueryRequest queryRequest) {
+    final QueryResponse queryResponse;
     try {
       log.info(String.format("DYNAMO DB CLIENT - Executing the query: %s", queryRequest));
       queryResponse = dynamoDbClient.query(queryRequest);
@@ -50,16 +81,5 @@ public class CampRequestDao {
             .stream()
             .map(campRequestMapper::toEntity)
             .collect(Collectors.toList());
-  }
-
-  public void create(final CampRequest campRequest) {
-    log.info("CAMP REQUEST TABLE - Create camp request.");
-    campRequestTable.putItem(campRequest);
-  }
-
-  public CampRequest update(final CampRequest campRequest) {
-    log.info("CAMP REQUEST TABLE - Update camp request.");
-    campRequestTable.putItem(campRequest);
-    return campRequest;
   }
 }
