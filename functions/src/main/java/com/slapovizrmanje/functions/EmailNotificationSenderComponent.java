@@ -42,31 +42,34 @@ public class EmailNotificationSenderComponent {
     private void sendEmail(final Notification notification) {
         log.info("Received notification: " + notification);
 
-        Destination destination = new Destination().withToAddresses(notification.getEmailAddress());
-
         // TODO Consider also responding based on preferable language
         // TODO Maybe also upgrade HTML
-        String bodyHTML = String.format(
-                "<html><head></head><body><h1>Hello!</h1><p> Confirm your camp reservation: %s%s.</p></body></html>",
-                "https://dvwuhobnm2.execute-api.eu-central-1.amazonaws.com/prod/api/reservation/confirm/camp/",
+        String verificationText = String.format(
+                "Verify your camp reservation: %s%s.",
+                "https://d3gxkr4tgt0zlg.cloudfront.net/camp/verify/",
                 notification.getRecordId());
+        String verificationHTML = String.format(
+                "<html><head></head><body><h1>Hello!</h1><p> %s</p></body></html>",
+                verificationText);
+
+        Content textContent = new Content().withCharset("UTF-8").withData(verificationText);
+        Body htmlContent = new Body(new Content().withCharset("UTF-8").withData(verificationHTML));
+        Message message = new Message()
+                .withBody(htmlContent)
+                .withSubject(textContent);
+        String source = "jovansimic995@gmail.com";
+        Destination destination = new Destination().withToAddresses(notification.getEmailAddress());
 
         try {
             SendEmailRequest request = new SendEmailRequest()
+                    .withSource(source)
                     .withDestination(destination)
-                    .withMessage(new Message()
-                            .withBody(new Body()
-                                    .withHtml(new Content()
-                                            .withCharset("UTF-8").withData(bodyHTML)))
-                            .withSubject(new Content()
-                                    .withCharset("UTF-8").withData("Confirm camp request")))
-                    .withSource("jovansimic995@gmail.com");
-            log.info("Sending an email via SES.");
+                    .withMessage(message);
+            log.info(String.format("Sending an email via SES; %s.", request));
             sesClient.sendEmail(request);
             log.info("Email has been sent.");
         } catch (final Exception e) {
-            log.error("Error sending email notification...", e);
-
+            log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
         }
     }
 }
