@@ -1,11 +1,12 @@
-package com.slapovizrmanje.shared.service;
+package com.slapovizrmanje.api.service;
 
-import com.slapovizrmanje.shared.dao.CampRequestDao;
+import com.slapovizrmanje.api.dao.CampRequestDao;
 import com.slapovizrmanje.shared.dto.CampRequestDTO;
-import com.slapovizrmanje.shared.exception.BadRequestException;
+import com.slapovizrmanje.api.util.TimeProvider;
+import com.slapovizrmanje.api.util.Validator;
+import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.shared.mapper.CampRequestMapper;
 import com.slapovizrmanje.shared.model.CampRequest;
-import com.slapovizrmanje.shared.util.TimeProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,9 +14,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import static com.slapovizrmanje.shared.util.Validator.validateAtLeastOnePositive;
-import static com.slapovizrmanje.shared.util.Validator.validateStartEndDate;
 
 @Slf4j
 @Service
@@ -25,9 +23,9 @@ public class ReservationService {
   private final CampRequestDao campRequestDao;
 
   public void checkAvailabilityForCamp(CampRequestDTO campRequestDTO) {
-    validateAtLeastOnePositive(campRequestDTO.getGuests());
-    validateAtLeastOnePositive(campRequestDTO.getLodging());
-    validateStartEndDate(campRequestDTO.getStartDate(), campRequestDTO.getEndDate());
+    Validator.validateAtLeastOnePositive(campRequestDTO.getGuests());
+    Validator.validateAtLeastOnePositive(campRequestDTO.getLodging());
+    Validator.validateStartEndDate(campRequestDTO.getStartDate(), campRequestDTO.getEndDate());
 
     log.info(String.format("CAMP REQUEST MAPPER - Convert to entity %s.", campRequestDTO));
     CampRequest campRequest = campRequestMapper.toEntity(campRequestDTO);

@@ -1,8 +1,8 @@
-package com.slapovizrmanje.shared.service;
+package com.slapovizrmanje.api.service;
 
-import com.slapovizrmanje.shared.dao.CampRequestDao;
-import com.slapovizrmanje.shared.exception.BadRequestException;
-import com.slapovizrmanje.shared.exception.NotFoundException;
+import com.slapovizrmanje.api.dao.CampRequestDao;
+import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.api.exception.NotFoundException;
 import com.slapovizrmanje.shared.model.CampRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +37,7 @@ public class VerificationService {
     campRequestDao.update(request);
     log.info("Successfully verified!");
 
+//    TODO: Maybe send email to author
 //    TODO: Send mail to Admin
   }
 }

@@ -1,6 +1,6 @@
-package com.slapovizrmanje.shared.dao;
+package com.slapovizrmanje.api.dao;
 
-import com.slapovizrmanje.shared.exception.DbErrorException;
+import com.slapovizrmanje.api.exception.DbErrorException;
 import com.slapovizrmanje.shared.mapper.CampRequestMapper;
 import com.slapovizrmanje.shared.model.CampRequest;
 import lombok.RequiredArgsConstructor;

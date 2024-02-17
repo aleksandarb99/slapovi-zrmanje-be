@@ -1,4 +1,4 @@
-package com.slapovizrmanje.shared.util;
+package com.slapovizrmanje.api.util;
 
 import lombok.extern.slf4j.Slf4j;
 

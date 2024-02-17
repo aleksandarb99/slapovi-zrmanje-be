@@ -1,6 +1,6 @@
-package com.slapovizrmanje.shared.util;
+package com.slapovizrmanje.api.util;
 
-import com.slapovizrmanje.shared.exception.BadRequestException;
+import com.slapovizrmanje.api.exception.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;

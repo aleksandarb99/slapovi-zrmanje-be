@@ -1,8 +1,8 @@
 package com.slapovizrmanje.api.controller;
 
 import com.slapovizrmanje.shared.dto.ExceptionMessageDTO;
-import com.slapovizrmanje.shared.exception.BadRequestException;
-import com.slapovizrmanje.shared.exception.DbErrorException;
+import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.api.exception.DbErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;

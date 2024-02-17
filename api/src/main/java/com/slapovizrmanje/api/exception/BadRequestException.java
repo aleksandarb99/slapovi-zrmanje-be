@@ -1,4 +1,4 @@
-package com.slapovizrmanje.shared.exception;
+package com.slapovizrmanje.api.exception;
 
 public class BadRequestException extends RuntimeException {
 

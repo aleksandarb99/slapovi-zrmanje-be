@@ -1,7 +1,7 @@
 package com.slapovizrmanje.api.controller;
 
 import com.slapovizrmanje.shared.dto.CampRequestDTO;
-import com.slapovizrmanje.shared.service.ReservationService;
+import com.slapovizrmanje.api.service.ReservationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
