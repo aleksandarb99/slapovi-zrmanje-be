@@ -1,6 +1,6 @@
-package com.slapovizrmanje.api.config;
+package com.slapovizrmanje.shared.config;
 
-import com.slapovizrmanje.api.model.CampRequest;
+import com.slapovizrmanje.shared.model.CampRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;

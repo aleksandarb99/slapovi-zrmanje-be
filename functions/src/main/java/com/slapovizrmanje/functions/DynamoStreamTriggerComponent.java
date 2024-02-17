@@ -2,9 +2,8 @@ package com.slapovizrmanje.functions;
 
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
-import com.amazonaws.services.lambda.runtime.events.models.dynamodb.StreamRecord;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.model.Notification;
+import com.slapovizrmanje.functions.model.Notification;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,6 +22,7 @@ public class DynamoStreamTriggerComponent {
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
 
+//    TODO: Koristi mapper onaj za mapiranje eventova na klase
     public Function<DynamodbEvent, DynamodbEvent> handleDynamoStreamEvent() {
         return dynamodbEvent -> {
             dynamodbEvent.getRecords().forEach(record -> {

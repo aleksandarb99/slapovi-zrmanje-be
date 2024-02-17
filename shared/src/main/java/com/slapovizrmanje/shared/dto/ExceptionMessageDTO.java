@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.dto;
+package com.slapovizrmanje.shared.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

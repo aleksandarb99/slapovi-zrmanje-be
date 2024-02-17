@@ -1,6 +1,6 @@
 package com.slapovizrmanje.api.controller;
 
-import com.slapovizrmanje.api.dto.ExceptionMessageDTO;
+import com.slapovizrmanje.shared.dto.ExceptionMessageDTO;
 import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.api.exception.DbErrorException;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class ControllerAdvisor {
 
+//    TODO: There is more exceptions
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(BadRequestException.class)
     public ExceptionMessageDTO handleBadRequestException(final BadRequestException e) {

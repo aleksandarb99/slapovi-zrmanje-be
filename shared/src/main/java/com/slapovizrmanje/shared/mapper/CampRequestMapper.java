@@ -1,11 +1,11 @@
-package com.slapovizrmanje.api.mapper;
+package com.slapovizrmanje.shared.mapper;
 
-import com.slapovizrmanje.api.dto.CampGuestsDTO;
-import com.slapovizrmanje.api.dto.CampLodgingDTO;
-import com.slapovizrmanje.api.dto.CampRequestDTO;
-import com.slapovizrmanje.api.model.CampGuests;
-import com.slapovizrmanje.api.model.CampLodging;
-import com.slapovizrmanje.api.model.CampRequest;
+import com.slapovizrmanje.shared.dto.CampGuestsDTO;
+import com.slapovizrmanje.shared.dto.CampLodgingDTO;
+import com.slapovizrmanje.shared.dto.CampRequestDTO;
+import com.slapovizrmanje.shared.model.CampGuests;
+import com.slapovizrmanje.shared.model.CampLodging;
+import com.slapovizrmanje.shared.model.CampRequest;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;

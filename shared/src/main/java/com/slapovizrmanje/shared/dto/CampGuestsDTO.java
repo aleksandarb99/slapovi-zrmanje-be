@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.dto;
+package com.slapovizrmanje.shared.dto;
 
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;

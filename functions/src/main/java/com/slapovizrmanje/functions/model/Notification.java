@@ -1,4 +1,4 @@
-package com.slapovizrmanje.model;
+package com.slapovizrmanje.functions.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -34,7 +34,7 @@ public class Validator {
 
     public static void validateStartEndDate(LocalDate startDate, LocalDate endDate) {
         log.info("Validating dates.");
-        if (startDate.isAfter(endDate)) {
+        if (!startDate.isBefore(endDate)) {
             throw new BadRequestException("Provided check out date has to be after the check in date.");
         }
         if (startDate.isBefore(LocalDate.now())) {

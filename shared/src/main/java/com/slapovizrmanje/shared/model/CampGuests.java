@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.model;
+package com.slapovizrmanje.shared.model;
 
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
