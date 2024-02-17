@@ -53,7 +53,7 @@ public class EmailNotificationSenderComponent {
                 verificationText);
 
         Content textContent = new Content().withCharset("UTF-8").withData(verificationText);
-        Body htmlContent = new Body(new Content().withCharset("UTF-8").withData(verificationHTML));
+        Body htmlContent = new Body().withHtml(new Content().withCharset("UTF-8").withData(verificationHTML));
         Message message = new Message()
                 .withBody(htmlContent)
                 .withSubject(textContent);
