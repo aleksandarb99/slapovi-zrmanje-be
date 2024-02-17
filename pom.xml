@@ -11,6 +11,7 @@
         <module>cdk</module>
         <module>api</module>
         <module>functions</module>
+        <module>shared</module>
     </modules>
 
     <properties>

@@ -1,6 +1,6 @@
 package com.slapovizrmanje.api.controller;
 
-import com.slapovizrmanje.api.service.VerificationService;
+import com.slapovizrmanje.shared.service.VerificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
