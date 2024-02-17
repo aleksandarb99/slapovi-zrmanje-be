@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+
+import static com.slapovizrmanje.api.util.Validator.validateAtLeastOnePositive;
+import static com.slapovizrmanje.api.util.Validator.validateStartEndDate;
 
 @Slf4j
 @Service
@@ -23,7 +25,9 @@ public class ReservationService {
   private final CampRequestDao campRequestDao;
 
   public void checkAvailabilityForCamp(CampRequestDTO campRequestDTO) {
-//    TODO: Validate request
+    validateAtLeastOnePositive(campRequestDTO.getGuests());
+    validateAtLeastOnePositive(campRequestDTO.getLodging());
+    validateStartEndDate(campRequestDTO.getStartDate(), campRequestDTO.getEndDate());
 
     log.info(String.format("CAMP REQUEST MAPPER - Convert to entity %s.", campRequestDTO));
     CampRequest campRequest = campRequestMapper.toEntity(campRequestDTO);
