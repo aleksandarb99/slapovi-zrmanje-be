@@ -5,7 +5,7 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.model.Notification;
+import com.slapovizrmanje.shared.model.Accommodation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,39 +27,40 @@ public class EmailNotificationSenderComponent {
         return emailNotificationsEvent -> {
             emailNotificationsEvent.getRecords().forEach(record -> {
                 try {
-                    final Notification notification = objectMapper.readValue(record.getBody(), Notification.class);
-                    switch (notification.getType()) {
-                        case CAMP_REQUEST -> sendEmail(notification);
+                    final Accommodation accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
+                    switch (accommodation.getType()) {
+                        case CAMP -> sendEmail(accommodation);
 //                        case "ROOM_REQUEST" -> sendEmail(notification);
 //                        case "APARTMENT_REQUEST" -> sendEmail(notification);
-                        default -> log.info(String.format("Email type - %s not handled yet!", notification.getType()));
+                        default -> log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
                 } catch (final JsonProcessingException e) {
-                    log.error("Unexpected notification type", e);
+                    log.error("Unexpected accommodation type", e);
                 }
             });
             return emailNotificationsEvent;
         };
     }
 
-    private void sendEmail(final Notification notification) {
-        log.info("Received notification: " + notification);
+    private void sendEmail(final Accommodation accommodation) {
+        log.info("Received accommodation: " + accommodation);
 
         // TODO Consider also responding based on preferable language
         // TODO Upgrade HTML with additional info in Notification
         String verificationText = String.format(
-                "Verify your camp reservation: %s/api/verification/verify?email=%s&id=%s.",
+                "Verify your camp reservation: %s/api/verification/verify?email=%s&id=%s&code=%s.",
                 url,
-                notification.getEmail(),
-                notification.getRecordId());
+                accommodation.getEmail(),
+                accommodation.getId(),
+                accommodation.getCode());
         String verificationHTML = String.format(
-                "<html><head></head><body><h1>Verify submitted camp request</h1>" +
+                "<html><head></head><body><h1>Verify submitted accommodation</h1>" +
                         "<p> Start date: %s</p>" +
                         "<p> End date: %s</p>" +
                         "<p> %s</p>" +
                         "</body></html>",
-                notification.getStartDate(),
-                notification.getEndDate(),
+                accommodation.getStartDate(),
+                accommodation.getEndDate(),
                 verificationText);
 
         Body bodyContent = new Body()
@@ -67,11 +68,11 @@ public class EmailNotificationSenderComponent {
                 .withText(new Content().withCharset(UTF_8).withData(verificationText));
         Message message = new Message()
                 .withBody(bodyContent)
-                .withSubject(new Content().withCharset(UTF_8).withData("Verify camp reservation request"));
+                .withSubject(new Content().withCharset(UTF_8).withData("Verify accommodation request"));
 
 //        TODO: Ovde ce biti s sajta naseg, tj domena
         String source = "jovansimic995@gmail.com";
-        Destination destination = new Destination().withToAddresses(notification.getEmail());
+        Destination destination = new Destination().withToAddresses(accommodation.getEmail());
 
         try {
             SendEmailRequest request = new SendEmailRequest()
