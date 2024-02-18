@@ -3,9 +3,8 @@ package com.slapovizrmanje.functions;
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent;
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.mapper.CampRequestMapper;
-import com.slapovizrmanje.shared.model.Notification;
-import com.slapovizrmanje.shared.model.enums.NotificationType;
+import com.slapovizrmanje.shared.mapper.AccommodationMapper;
+import com.slapovizrmanje.shared.model.Accommodation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,57 +22,25 @@ public class DynamoStreamTriggerComponent {
 
     private final SqsClient sqsClient;
     private final ObjectMapper objectMapper;
-    private final CampRequestMapper campRequestMapper;
-
-    private static final String INSERT = "INSERT";
-    private static final String MODIFY = "MODIFY";
+    private final AccommodationMapper accommodationMapper;
 
     public Function<DynamodbEvent, DynamodbEvent> handleDynamoStreamEvent() {
         return dynamodbEvent -> {
             dynamodbEvent.getRecords().forEach(record -> {
-
-                Notification notification = null;
                 Map<String, AttributeValue> streamRecord = record.getDynamodb().getNewImage();
-                String recordId = streamRecord.get("id").getS();
+                log.info("ACCOMMODATION MAPPER - Dynamodb event to accommodation.");
+                Accommodation accommodation = accommodationMapper.eventToAccommodation(streamRecord);
 
-                if (recordId.startsWith("camp-request")) {
-                    log.info("CAMP REQUEST MAPPER - Dynamodb event to camp request notification.");
-                    notification = campRequestMapper.eventToNotification(streamRecord);
-                    if (record.getEventName().equals(INSERT)) {
-                        log.info(String.format("Notification type set to %s", NotificationType.CAMP_REQUEST));
-                        notification.setType(NotificationType.CAMP_REQUEST);
-                    } else if(record.getEventName().equals(MODIFY)) {
-                        if (notification.isVerified()) {
-                            log.info(String.format("Notification type set to %s", NotificationType.CAMP_VERIFY));
-                            notification.setType(NotificationType.CAMP_VERIFY);
-                        } else {
-                            log.info("Modification type still not handled!");
-                            return;
-                        }
-                        // TODO Add other modification types e.g. CAMP_ACCEPT, CAMP_REJECT (Determine based on modified attributes)
-                    } else {
-                        log.info("Not supported event type!!!");
-                        return;
-                    }
-                } else if (recordId.startsWith("apartment-request")) {
-                    log.info("Apartment type still not handled!");
-                } else if (recordId.startsWith("room-request")) {
-                    log.info("Room type still not handled!");
-                } else {
-                    log.info(String.format("Not known id %s", recordId));
-                    return;
-                }
-
-                sendMessage(notification);
+                sendMessageToQueue(accommodation);
             });
             return dynamodbEvent;
         };
     }
 
-    private void sendMessage(final Notification notification) {
+    private void sendMessageToQueue(final Accommodation accommodation) {
         String queueUrl = getQueueUrl();
         try {
-            String message = objectMapper.writeValueAsString(notification);
+            String message = objectMapper.writeValueAsString(accommodation);
             log.info(String.format("Sending a message to SQS - %s.", message));
             sqsClient.sendMessage(SendMessageRequest.builder()
                     .queueUrl(queueUrl)

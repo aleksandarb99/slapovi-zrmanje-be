@@ -8,15 +8,9 @@ import com.amazonaws.services.lambda.runtime.events.models.dynamodb.StreamRecord
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.dto.CampGuestsDTO;
-import com.slapovizrmanje.shared.dto.CampLodgingDTO;
-import com.slapovizrmanje.shared.dto.CampRequestDTO;
-import com.slapovizrmanje.shared.mapper.CampRequestMapper;
-import com.slapovizrmanje.shared.mapper.CampRequestMapperImpl;
-import com.slapovizrmanje.shared.model.CampGuests;
-import com.slapovizrmanje.shared.model.CampLodging;
-import com.slapovizrmanje.shared.model.CampRequest;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.slapovizrmanje.shared.mapper.AccommodationMapper;
+import com.slapovizrmanje.shared.mapper.AccommodationMapperImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -43,7 +37,13 @@ public class FunctionsConfig {
     public Function<DynamodbEvent, DynamodbEvent> handleDynamoStreamEvent(final DynamoStreamTriggerComponent dynamoStreamTriggerComponent) {
         return dynamoStreamTriggerComponent.handleDynamoStreamEvent();
     }
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
 
+        return objectMapper;
+    }
     @Bean
     public SqsClient sqsClient() {
         return SqsClient.builder()
@@ -59,8 +59,8 @@ public class FunctionsConfig {
     }
 
     public static void main(final String[] args) {
-        testEmailLambda();
-//        testDynamoLambda();
+//        testEmailLambda();
+        testDynamoLambda();
     }
 
     // When needed similar can be added for DynamoStream Lambda
@@ -88,11 +88,11 @@ public class FunctionsConfig {
     }
 
     private static void testDynamoLambda() {
-        CampRequestMapper campRequestMapper = new CampRequestMapperImpl();
+        AccommodationMapper accommodationMapper = new AccommodationMapperImpl();
         SqsClient sqsClient = SqsClient.builder()
                 .region(Region.EU_CENTRAL_1)
                 .build();
-        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), campRequestMapper);
+        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), accommodationMapper);
         Function<DynamodbEvent, DynamodbEvent> dynamoLambda = dynamoStreamTriggerComponent.handleDynamoStreamEvent();
 
         // Create Guests
