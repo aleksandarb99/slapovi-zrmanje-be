@@ -5,7 +5,7 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.functions.model.Notification;
+import com.slapovizrmanje.shared.model.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,17 +21,18 @@ public class EmailNotificationSenderComponent {
     private final String url = "https://d3gxkr4tgt0zlg.cloudfront.net";
     private final AmazonSimpleEmailService sesClient;
     private final ObjectMapper objectMapper;
+    private static final String UTF_8 = "UTF-8";
 
     public Function<SQSEvent, SQSEvent> sendEmailNotification() {
         return emailNotificationsEvent -> {
             emailNotificationsEvent.getRecords().forEach(record -> {
                 try {
                     final Notification notification = objectMapper.readValue(record.getBody(), Notification.class);
-                    switch (notification.getEmailType()) {
-                        case "CAMP_REQUEST" -> sendEmail(notification);
+                    switch (notification.getType()) {
+                        case CAMP_REQUEST -> sendEmail(notification);
 //                        case "ROOM_REQUEST" -> sendEmail(notification);
 //                        case "APARTMENT_REQUEST" -> sendEmail(notification);
-                        default -> log.info(String.format("Email type - %s not handled yet!", notification.getEmailType()));
+                        default -> log.info(String.format("Email type - %s not handled yet!", notification.getType()));
                     }
                 } catch (final JsonProcessingException e) {
                     log.error("Unexpected notification type", e);
@@ -45,26 +46,32 @@ public class EmailNotificationSenderComponent {
         log.info("Received notification: " + notification);
 
         // TODO Consider also responding based on preferable language
-        // TODO Maybe also upgrade HTML
+        // TODO Upgrade HTML with additional info in Notification
         String verificationText = String.format(
-                "Verify your camp reservation: %s.",
-                url + "/api/verification/verify?email=" +
-                notification.getEmailAddress() +
-                "&id=" +
+                "Verify your camp reservation: %s/api/verification/verify?email=%s&id=%s.",
+                url,
+                notification.getEmail(),
                 notification.getRecordId());
         String verificationHTML = String.format(
-                "<html><head></head><body><h1>Hello!</h1><p> %s</p></body></html>",
+                "<html><head></head><body><h1>Verify submitted camp request</h1>" +
+                        "<p> Start date: %s</p>" +
+                        "<p> End date: %s</p>" +
+                        "<p> %s</p>" +
+                        "</body></html>",
+                notification.getStartDate(),
+                notification.getEndDate(),
                 verificationText);
 
-        Content textContent = new Content().withCharset("UTF-8").withData(verificationText);
-        Body htmlContent = new Body().withHtml(new Content().withCharset("UTF-8").withData(verificationHTML));
+        Body bodyContent = new Body()
+                .withHtml(new Content().withCharset(UTF_8).withData(verificationHTML))
+                .withText(new Content().withCharset(UTF_8).withData(verificationText));
         Message message = new Message()
-                .withBody(htmlContent)
-                .withSubject(textContent);
+                .withBody(bodyContent)
+                .withSubject(new Content().withCharset(UTF_8).withData("Verify camp reservation request"));
 
 //        TODO: Ovde ce biti s sajta naseg, tj domena
         String source = "jovansimic995@gmail.com";
-        Destination destination = new Destination().withToAddresses(notification.getEmailAddress());
+        Destination destination = new Destination().withToAddresses(notification.getEmail());
 
         try {
             SendEmailRequest request = new SendEmailRequest()

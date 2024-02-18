@@ -15,10 +15,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VerificationService {
   private final CampRequestDao campRequestDao;
+
 //  TODO: Data model update and extract commons subproject
   public void verify(String email, String id) {
     log.info("CAMP REQUEST DAO - Fetching by email and id pair.");
-    List<CampRequest> foundEntities = campRequestDao.findByEmailAndIdPair(email, id);
+    List<CampRequest> foundEntities = campRequestDao.findByEmailAndIdPair(email, "camp-request#" + id);
     log.info(String.format("Found camp entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
