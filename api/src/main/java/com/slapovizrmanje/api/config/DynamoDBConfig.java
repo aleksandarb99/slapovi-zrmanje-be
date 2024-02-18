@@ -1,4 +1,4 @@
-package com.slapovizrmanje.shared.config;
+package com.slapovizrmanje.api.config;
 
 import com.slapovizrmanje.shared.model.CampRequest;
 import org.springframework.context.annotation.Bean;

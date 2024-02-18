@@ -8,6 +8,14 @@ import com.amazonaws.services.lambda.runtime.events.models.dynamodb.StreamRecord
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.slapovizrmanje.shared.dto.CampGuestsDTO;
+import com.slapovizrmanje.shared.dto.CampLodgingDTO;
+import com.slapovizrmanje.shared.dto.CampRequestDTO;
+import com.slapovizrmanje.shared.mapper.CampRequestMapper;
+import com.slapovizrmanje.shared.mapper.CampRequestMapperImpl;
+import com.slapovizrmanje.shared.model.CampGuests;
+import com.slapovizrmanje.shared.model.CampLodging;
+import com.slapovizrmanje.shared.model.CampRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -51,8 +59,8 @@ public class FunctionsConfig {
     }
 
     public static void main(final String[] args) {
-//        testEmailLambda();
-        testDynamoLambda();
+        testEmailLambda();
+//        testDynamoLambda();
     }
 
     // When needed similar can be added for DynamoStream Lambda
@@ -66,7 +74,11 @@ public class FunctionsConfig {
         // Create SQSMessage
         SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
         sqsMessage.setMessageId("1");
-        sqsMessage.setBody("{\"emailAddress\": \"test@test.com\", \"emailType\": \"CAMP_REQUEST\", \"recordId\": \"testRecordId123\"}");
+        sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
+                "\"type\": \"CAMP_REQUEST\", " +
+                "\"startDate\": \"2024-02-16\", " +
+                "\"endDate\": \"2024-02-17\", " +
+                "\"recordId\": \"testRecordId123\"}");
 
         // Create SQSEvent
         SQSEvent sqsEvent = new SQSEvent();
@@ -76,19 +88,42 @@ public class FunctionsConfig {
     }
 
     private static void testDynamoLambda() {
+        CampRequestMapper campRequestMapper = new CampRequestMapperImpl();
         SqsClient sqsClient = SqsClient.builder()
                 .region(Region.EU_CENTRAL_1)
                 .build();
-        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper());
+        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), campRequestMapper);
         Function<DynamodbEvent, DynamodbEvent> dynamoLambda = dynamoStreamTriggerComponent.handleDynamoStreamEvent();
 
-        AttributeValue id = new AttributeValue().withS("kjsns-sjndj-asdas-snjds");
-        AttributeValue email = new AttributeValue().withS("test@test.com");
-        Map<String, AttributeValue> map = new HashMap<>();
-        map.put("id", id);
-        map.put("email", email);
+        // Create Guests
+        Map<String, AttributeValue> guestsMap = new HashMap<>();
+        guestsMap.put("adults", new AttributeValue().withN("2"));
+        guestsMap.put("children", new AttributeValue().withN("0"));
+        guestsMap.put("infants", new AttributeValue().withN("0"));
+        guestsMap.put("pets", new AttributeValue().withN("1"));
+
+        // Create Lodging
+        Map<String, AttributeValue> lodgingMap = new HashMap<>();
+        lodgingMap.put("car", new AttributeValue().withN("1"));
+        lodgingMap.put("caravan", new AttributeValue().withN("0"));
+        lodgingMap.put("tent", new AttributeValue().withN("1"));
+        lodgingMap.put("sleeping_bag", new AttributeValue().withN("0"));
+
+        // Create final map
+        Map<String, AttributeValue> finalMap = new HashMap<>();
+        finalMap.put("id", new AttributeValue().withS("camp-request#kjsns-sjndj-asdas-snjds"));
+        finalMap.put("email", new AttributeValue().withS("test@test.com"));
+        finalMap.put("first_name", new AttributeValue().withS("Jovan"));
+        finalMap.put("last_name", new AttributeValue().withS("Simic"));
+        finalMap.put("verified", new AttributeValue().withBOOL(true));
+        finalMap.put("power_supply", new AttributeValue().withBOOL(false));
+        finalMap.put("created_at", new AttributeValue().withN("1707691825368"));
+        finalMap.put("start_date", new AttributeValue().withS("2024-03-19"));
+        finalMap.put("end_date", new AttributeValue().withS("2024-03-20"));
+        finalMap.put("guests", new AttributeValue().withM(guestsMap));
+        finalMap.put("lodging", new AttributeValue().withM(lodgingMap));
         StreamRecord streamRecord = new StreamRecord();
-        streamRecord.setNewImage(map);
+        streamRecord.setNewImage(finalMap);
 
         // Create DynamodbStreamRecord
         DynamodbEvent.DynamodbStreamRecord record = new DynamodbEvent.DynamodbStreamRecord();

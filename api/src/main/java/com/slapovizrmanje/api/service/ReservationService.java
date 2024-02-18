@@ -29,7 +29,7 @@ public class ReservationService {
 
     log.info(String.format("CAMP REQUEST MAPPER - Convert to entity %s.", campRequestDTO));
     CampRequest campRequest = campRequestMapper.toEntity(campRequestDTO);
-    campRequest.setId(UUID.randomUUID().toString());
+    campRequest.setId(String.format("camp-request#%s", UUID.randomUUID()));
     campRequest.setCreatedAt(System.currentTimeMillis());
 
     log.info("CAMP REQUEST DAO - Fetching by email.");

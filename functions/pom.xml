@@ -85,7 +85,11 @@
     </build>
 
     <dependencies>
-
+        <dependency>
+            <groupId>com.slapovizrmanje</groupId>
+            <artifactId>shared</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- Third party libraries -->
         <dependency>
             <groupId>org.slf4j</groupId>
