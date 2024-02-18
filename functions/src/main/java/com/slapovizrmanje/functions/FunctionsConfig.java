@@ -76,8 +76,12 @@ public class FunctionsConfig {
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
                 "\"type\": \"CAMP_REQUEST\", " +
+                "\"firstName\": \"Jovan\", " +
+                "\"lastName\": \"Simic\", " +
                 "\"startDate\": \"2024-02-16\", " +
                 "\"endDate\": \"2024-02-17\", " +
+                "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 0}, " +
                 "\"recordId\": \"testRecordId123\"}");
 
         // Create SQSEvent
