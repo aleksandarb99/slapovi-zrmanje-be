@@ -44,6 +44,7 @@
         <dynamodb-enhanced.version>2.21.11</dynamodb-enhanced.version>
         <mapstruct.version>1.5.3.Final</mapstruct.version>
         <jackson.version>2.15.3</jackson.version>
+        <jackson-datatype-jsr310.version>2.14.2</jackson-datatype-jsr310.version>
     </properties>
 
     <build>
@@ -117,7 +118,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.datatype</groupId>
                 <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
+                <version>${jackson-datatype-jsr310.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

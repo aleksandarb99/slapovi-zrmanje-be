@@ -5,11 +5,19 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.slapovizrmanje.shared.model.Accommodation;
+import com.slapovizrmanje.shared.model.CampGuests;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.function.Function;
 
 @Slf4j
@@ -47,28 +55,23 @@ public class EmailNotificationSenderComponent {
 
         // TODO Consider also responding based on preferable language
         // TODO Upgrade HTML with additional info in Notification
-        String verificationText = String.format(
-                "Verify your camp reservation: %s/api/verification/verify?email=%s&id=%s&code=%s.",
-                url,
-                accommodation.getEmail(),
-                accommodation.getId(),
-                accommodation.getCode());
-        String verificationHTML = String.format(
-                "<html><head></head><body><h1>Verify submitted accommodation</h1>" +
-                        "<p> Start date: %s</p>" +
-                        "<p> End date: %s</p>" +
-                        "<p> %s</p>" +
-                        "</body></html>",
-                accommodation.getStartDate(),
-                accommodation.getEndDate(),
-                verificationText);
 
-        Body bodyContent = new Body()
-                .withHtml(new Content().withCharset(UTF_8).withData(verificationHTML))
-                .withText(new Content().withCharset(UTF_8).withData(verificationText));
+        String emailBody = "";
+        try {
+            final String verificationLink = String.format(
+                    "%s/api/verification/verify?email=%s&id=%s", url, accommodation.getEmail(), accommodation.getId());
+            final String infoParagraph = generateInfoParagraph(accommodation);
+            final File resource = ResourceUtils.getFile("classpath:email-template.html");
+            final String template = new String(Files.readAllBytes(resource.toPath()));
+            emailBody = String.format(template, infoParagraph, verificationLink);
+        } catch (final IOException e) {
+            log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
+        }
+
+        Body bodyContent = new Body().withHtml(new Content().withCharset(UTF_8).withData(emailBody));
         Message message = new Message()
                 .withBody(bodyContent)
-                .withSubject(new Content().withCharset(UTF_8).withData("Verify accommodation request"));
+                .withSubject(new Content().withCharset(UTF_8).withData("Slapovi Zrmanje Notification"));
 
 //        TODO: Ovde ce biti s sajta naseg, tj domena
         String source = "jovansimic995@gmail.com";
@@ -79,11 +82,44 @@ public class EmailNotificationSenderComponent {
                     .withSource(source)
                     .withDestination(destination)
                     .withMessage(message);
-            log.info(String.format("Sending an email via SES; %s.", request));
+            log.info("Sending an email via SES.");
             sesClient.sendEmail(request);
             log.info("Email has been sent.");
         } catch (final Exception e) {
             log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
         }
+    }
+
+    private String generateInfoParagraph(final Accommodation accommodation) {
+        return generateVerificationText(accommodation);
+//        return switch (accommodation.get()) {
+//            case CAMP -> generateVerificationText(accommodation);
+//            case CAMP_VERIFY ->
+//                    String.format("Rok za uplatu u grupi <b>%s</b> se bli&#382;i - <b>%s</b>. Info za uplatu mo&#382;e&#353; videti u aplikaciji.",
+//                            notification.getGroupName(), notification.getDeadline());
+//            case CAMP_VERIFY -> null;
+//        };
+    }
+
+    private String generateVerificationText(final Accommodation accommodation) {
+        StringBuilder lodgingBuilder = new StringBuilder("Lodging:<ul>");
+        accommodation.getLodging().forEach((key, value) -> {
+            if (value > 0) {
+                lodgingBuilder.append("<li>");
+                lodgingBuilder.append(key.substring(0,1).toUpperCase());
+                lodgingBuilder.append(!key.equals("sleeping_bag") ? key.substring(1) : Arrays.toString(key.substring(1).split("_")));
+                lodgingBuilder.append(": ");
+                lodgingBuilder.append(value);
+                lodgingBuilder.append("</li>");
+            }
+        });
+        lodgingBuilder.append("</ul>");
+        String text = String.format("Ime: %s<br>Prezime: %s<br>Datum prijavljivanja: %s<br>Datum odjavljivanja: %s<br>%s<br>",
+                accommodation.getFirstName(),
+                accommodation.getLastName(),
+                accommodation.getStartDate(),
+                accommodation.getEndDate(),
+                lodgingBuilder);
+        return text;
     }
 }

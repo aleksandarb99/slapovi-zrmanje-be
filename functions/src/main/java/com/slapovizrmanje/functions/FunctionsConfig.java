@@ -37,13 +37,14 @@ public class FunctionsConfig {
     public Function<DynamodbEvent, DynamodbEvent> handleDynamoStreamEvent(final DynamoStreamTriggerComponent dynamoStreamTriggerComponent) {
         return dynamoStreamTriggerComponent.handleDynamoStreamEvent();
     }
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-
         return objectMapper;
     }
+
     @Bean
     public SqsClient sqsClient() {
         return SqsClient.builder()
@@ -59,8 +60,8 @@ public class FunctionsConfig {
     }
 
     public static void main(final String[] args) {
-//        testEmailLambda();
-        testDynamoLambda();
+        testEmailLambda();
+//        testDynamoLambda();
     }
 
     // When needed similar can be added for DynamoStream Lambda
@@ -68,17 +69,23 @@ public class FunctionsConfig {
         AmazonSimpleEmailService sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
                 .withRegion(Regions.EU_CENTRAL_1)
                 .build();
-        EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, new ObjectMapper());
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, objectMapper);
         Function<SQSEvent, SQSEvent> emailLambda = emailNotificationSenderComponent.sendEmailNotification();
 
         // Create SQSMessage
         SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
-                "\"type\": \"CAMP_REQUEST\", " +
+                "\"type\": \"CAMP\", " +
+                "\"firstName\": \"Jovan\", " +
+                "\"lastName\": \"Simic\", " +
                 "\"startDate\": \"2024-02-16\", " +
                 "\"endDate\": \"2024-02-17\", " +
-                "\"recordId\": \"testRecordId123\"}");
+                "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 0}, " +
+                "\"id\": \"testRecordId123\"}");
 
         // Create SQSEvent
         SQSEvent sqsEvent = new SQSEvent();
@@ -88,6 +95,7 @@ public class FunctionsConfig {
     }
 
     private static void testDynamoLambda() {
+        // AccommodationMapperImpl if not recognized -> ./mvnw clean package
         AccommodationMapper accommodationMapper = new AccommodationMapperImpl();
         SqsClient sqsClient = SqsClient.builder()
                 .region(Region.EU_CENTRAL_1)
