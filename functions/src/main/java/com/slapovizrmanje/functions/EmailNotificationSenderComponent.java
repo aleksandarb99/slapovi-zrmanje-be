@@ -5,7 +5,9 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.model.Notification;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.slapovizrmanje.shared.model.Accommodation;
+import com.slapovizrmanje.shared.model.CampGuests;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,6 +15,7 @@ import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -32,23 +35,23 @@ public class EmailNotificationSenderComponent {
         return emailNotificationsEvent -> {
             emailNotificationsEvent.getRecords().forEach(record -> {
                 try {
-                    final Notification notification = objectMapper.readValue(record.getBody(), Notification.class);
-                    switch (notification.getType()) {
-                        case CAMP_REQUEST -> sendEmail(notification);
+                    final Accommodation accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
+                    switch (accommodation.getType()) {
+                        case CAMP -> sendEmail(accommodation);
 //                        case "ROOM_REQUEST" -> sendEmail(notification);
 //                        case "APARTMENT_REQUEST" -> sendEmail(notification);
-                        default -> log.info(String.format("Email type - %s not handled yet!", notification.getType()));
+                        default -> log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
                 } catch (final JsonProcessingException e) {
-                    log.error("Unexpected notification type", e);
+                    log.error("Unexpected accommodation type", e);
                 }
             });
             return emailNotificationsEvent;
         };
     }
 
-    private void sendEmail(final Notification notification) {
-        log.info("Received notification: " + notification);
+    private void sendEmail(final Accommodation accommodation) {
+        log.info("Received accommodation: " + accommodation);
 
         // TODO Consider also responding based on preferable language
         // TODO Upgrade HTML with additional info in Notification
@@ -56,8 +59,8 @@ public class EmailNotificationSenderComponent {
         String emailBody = "";
         try {
             final String verificationLink = String.format(
-                    "%s/api/verification/verify?email=%s&id=%s", url, notification.getEmail(), notification.getRecordId());
-            final String infoParagraph = generateInfoParagraph(notification);
+                    "%s/api/verification/verify?email=%s&id=%s", url, accommodation.getEmail(), accommodation.getId());
+            final String infoParagraph = generateInfoParagraph(accommodation);
             final File resource = ResourceUtils.getFile("classpath:email-template.html");
             final String template = new String(Files.readAllBytes(resource.toPath()));
             emailBody = String.format(template, infoParagraph, verificationLink);
@@ -72,7 +75,7 @@ public class EmailNotificationSenderComponent {
 
 //        TODO: Ovde ce biti s sajta naseg, tj domena
         String source = "jovansimic995@gmail.com";
-        Destination destination = new Destination().withToAddresses(notification.getEmail());
+        Destination destination = new Destination().withToAddresses(accommodation.getEmail());
 
         try {
             SendEmailRequest request = new SendEmailRequest()
@@ -87,31 +90,20 @@ public class EmailNotificationSenderComponent {
         }
     }
 
-    private String generateInfoParagraph(final Notification notification) {
-        return switch (notification.getType()) {
-            case CAMP_REQUEST -> generateVerificationText(notification);
+    private String generateInfoParagraph(final Accommodation accommodation) {
+        return generateVerificationText(accommodation);
+//        return switch (accommodation.get()) {
+//            case CAMP -> generateVerificationText(accommodation);
 //            case CAMP_VERIFY ->
 //                    String.format("Rok za uplatu u grupi <b>%s</b> se bli&#382;i - <b>%s</b>. Info za uplatu mo&#382;e&#353; videti u aplikaciji.",
 //                            notification.getGroupName(), notification.getDeadline());
-            case CAMP_VERIFY -> null;
-        };
+//            case CAMP_VERIFY -> null;
+//        };
     }
 
-    private String generateVerificationText(final Notification notification) {
-        StringBuilder guestsBuilder = new StringBuilder("<br>Guests:<ul>");
-        notification.getGuests().forEach((key, value) -> {
-            if (value > 0) {
-                guestsBuilder.append("<li>");
-                guestsBuilder.append(key.substring(0,1).toUpperCase());
-                guestsBuilder.append(key, 1, key.length());
-                guestsBuilder.append(": ");
-                guestsBuilder.append(value);
-                guestsBuilder.append("</li>");
-            }
-        });
-        guestsBuilder.append("</ul>");
+    private String generateVerificationText(final Accommodation accommodation) {
         StringBuilder lodgingBuilder = new StringBuilder("Lodging:<ul>");
-        notification.getLodging().forEach((key, value) -> {
+        accommodation.getLodging().forEach((key, value) -> {
             if (value > 0) {
                 lodgingBuilder.append("<li>");
                 lodgingBuilder.append(key.substring(0,1).toUpperCase());
@@ -122,12 +114,11 @@ public class EmailNotificationSenderComponent {
             }
         });
         lodgingBuilder.append("</ul>");
-        String text = String.format("Ime: %s<br>Prezime: %s<br>Datum prijavljivanja: %s<br>Datum odjavljivanja: %s<br>%s<br>%s<br>",
-                notification.getFirstName(),
-                notification.getLastName(),
-                notification.getStartDate(),
-                notification.getEndDate(),
-                guestsBuilder,
+        String text = String.format("Ime: %s<br>Prezime: %s<br>Datum prijavljivanja: %s<br>Datum odjavljivanja: %s<br>%s<br>",
+                accommodation.getFirstName(),
+                accommodation.getLastName(),
+                accommodation.getStartDate(),
+                accommodation.getEndDate(),
                 lodgingBuilder);
         return text;
     }

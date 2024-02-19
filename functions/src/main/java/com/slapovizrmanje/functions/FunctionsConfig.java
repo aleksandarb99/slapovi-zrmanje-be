@@ -8,15 +8,9 @@ import com.amazonaws.services.lambda.runtime.events.models.dynamodb.StreamRecord
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.dto.CampGuestsDTO;
-import com.slapovizrmanje.shared.dto.CampLodgingDTO;
-import com.slapovizrmanje.shared.dto.CampRequestDTO;
-import com.slapovizrmanje.shared.mapper.CampRequestMapper;
-import com.slapovizrmanje.shared.mapper.CampRequestMapperImpl;
-import com.slapovizrmanje.shared.model.CampGuests;
-import com.slapovizrmanje.shared.model.CampLodging;
-import com.slapovizrmanje.shared.model.CampRequest;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.slapovizrmanje.shared.mapper.AccommodationMapper;
+import com.slapovizrmanje.shared.mapper.AccommodationMapperImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -45,6 +39,13 @@ public class FunctionsConfig {
     }
 
     @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return objectMapper;
+    }
+
+    @Bean
     public SqsClient sqsClient() {
         return SqsClient.builder()
                 .region(Region.EU_CENTRAL_1)
@@ -68,21 +69,23 @@ public class FunctionsConfig {
         AmazonSimpleEmailService sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
                 .withRegion(Regions.EU_CENTRAL_1)
                 .build();
-        EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, new ObjectMapper());
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, objectMapper);
         Function<SQSEvent, SQSEvent> emailLambda = emailNotificationSenderComponent.sendEmailNotification();
 
         // Create SQSMessage
         SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
-                "\"type\": \"CAMP_REQUEST\", " +
+                "\"type\": \"CAMP\", " +
                 "\"firstName\": \"Jovan\", " +
                 "\"lastName\": \"Simic\", " +
                 "\"startDate\": \"2024-02-16\", " +
                 "\"endDate\": \"2024-02-17\", " +
                 "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
                 "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 0}, " +
-                "\"recordId\": \"testRecordId123\"}");
+                "\"id\": \"testRecordId123\"}");
 
         // Create SQSEvent
         SQSEvent sqsEvent = new SQSEvent();
@@ -92,11 +95,12 @@ public class FunctionsConfig {
     }
 
     private static void testDynamoLambda() {
-        CampRequestMapper campRequestMapper = new CampRequestMapperImpl();
+        // AccommodationMapperImpl if not recognized -> ./mvnw clean package
+        AccommodationMapper accommodationMapper = new AccommodationMapperImpl();
         SqsClient sqsClient = SqsClient.builder()
                 .region(Region.EU_CENTRAL_1)
                 .build();
-        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), campRequestMapper);
+        DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), accommodationMapper);
         Function<DynamodbEvent, DynamodbEvent> dynamoLambda = dynamoStreamTriggerComponent.handleDynamoStreamEvent();
 
         // Create Guests

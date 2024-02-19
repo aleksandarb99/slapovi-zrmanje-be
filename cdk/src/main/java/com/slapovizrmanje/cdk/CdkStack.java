@@ -31,13 +31,13 @@ import java.util.Map;
 
 public class CdkStack extends Stack {
 
-    private Table requestTable = null;
+    private Table accommodationTable = null;
 
     public CdkStack(final Construct scope, final StackProps props) {
         super(scope, "slapovi-zrmanje-be", props);
 
         // Create tables
-        String requestTableArn = createRequestTable(this);
+        String accommodationTableArn = createAccommodationTable(this);
 
         // API Gateway and Lambda
         final SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-lambda",
@@ -49,8 +49,8 @@ public class CdkStack extends Stack {
                         .memorySize(2048)
                         .timeout(Duration.seconds(30))
                         .build());
-        apiFunction.getFunction().addToRolePolicy(getDynamoReadStatement(requestTableArn, "AllowRequestTableRead"));
-        apiFunction.getFunction().addToRolePolicy(getDynamoWriteStatement(requestTableArn, "AllowRequestTableWrite"));
+        apiFunction.getFunction().addToRolePolicy(getDynamoReadStatement(accommodationTableArn, "AllowRequestTableRead"));
+        apiFunction.getFunction().addToRolePolicy(getDynamoWriteStatement(accommodationTableArn, "AllowRequestTableWrite"));
 
         apiFunction.getAlias().grantInvoke(new ServicePrincipal("apigateway.amazonaws.com"));
 
@@ -113,7 +113,7 @@ public class CdkStack extends Stack {
                 .create(emailQueue)
                 .build();
         emailLambda.addEventSource(emailSqsEventSource);
-        emailLambda.grantInvoke(new ServicePrincipal("lambda.amazonaws.com"));
+        emailLambda.addToRolePolicy(getSesSendEmailStatement("AllowSendingEmail"));
 
         // Dynamo Handler Lambda
         final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
@@ -142,7 +142,7 @@ public class CdkStack extends Stack {
         SqsDlq streamEventDlQueue = new SqsDlq(streamEventQueue);
 
         final DynamoEventSource dynamoEventSource = DynamoEventSource.Builder
-                .create(requestTable)
+                .create(accommodationTable)
                 .batchSize(1)
                 .startingPosition(StartingPosition.LATEST)
                 .onFailure(streamEventDlQueue)
@@ -150,7 +150,7 @@ public class CdkStack extends Stack {
                 .build();
 
         dynamoTriggerLambda.addEventSource(dynamoEventSource);
-        dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(requestTable.getTableStreamArn(), "AllowDynamoStreams"));
+        dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(accommodationTable.getTableStreamArn(), "AllowDynamoStreams"));
         dynamoTriggerLambda.addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
 
         // Create an Email SNS topic
@@ -178,7 +178,7 @@ public class CdkStack extends Stack {
         emailAlarm.addAlarmAction(new SnsAction(emailSnsTopic));
     }
 
-    private String createRequestTable(Construct scope) {
+    private String createAccommodationTable(Construct scope) {
         final Attribute email = Attribute.builder()
                 .name("email")
                 .type(AttributeType.STRING)
@@ -187,14 +187,14 @@ public class CdkStack extends Stack {
                 .name("id")
                 .type(AttributeType.STRING)
                 .build();
-        requestTable = new Table(scope, "request-table", TableProps.builder()
-                .tableName("request-table")
+        accommodationTable = new Table(scope, "accommodation", TableProps.builder()
+                .tableName("accommodation")
                 .partitionKey(email)
                 .sortKey(id)
                 .billingMode(BillingMode.PAY_PER_REQUEST)
                 .stream(StreamViewType.NEW_IMAGE)
                 .build());
-        return requestTable.getTableArn();
+        return accommodationTable.getTableArn();
     }
 
     private PolicyStatement getDynamoReadStatement(final String tableArn, final String sid) {
@@ -215,6 +215,14 @@ public class CdkStack extends Stack {
                 .build());
     }
 
+    private PolicyStatement getSesSendEmailStatement(String sid) {
+        return new PolicyStatement(PolicyStatementProps.builder()
+                .sid(sid)
+                .effect(Effect.ALLOW)
+                .actions(List.of("ses:SendEmail"))
+                .resources(List.of("*"))
+                .build());
+    }
     private PolicyStatement getDynamoStreamsStatement(final String streamArn, final String sid) {
         return new PolicyStatement(PolicyStatementProps.builder()
                 .sid(sid)

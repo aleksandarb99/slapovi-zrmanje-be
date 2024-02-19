@@ -1,6 +1,6 @@
 package com.slapovizrmanje.api.config;
 
-import com.slapovizrmanje.shared.model.CampRequest;
+import com.slapovizrmanje.shared.model.Accommodation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
@@ -27,7 +27,7 @@ public class DynamoDBConfig {
   }
 
   @Bean
-  public DynamoDbTable<CampRequest> campRequestTable() {
-    return amazonDynamoDB().table("request-table", TableSchema.fromBean(CampRequest.class));
+  public DynamoDbTable<Accommodation> accommodationTable() {
+    return amazonDynamoDB().table("accommodation", TableSchema.fromBean(Accommodation.class));
   }
 }

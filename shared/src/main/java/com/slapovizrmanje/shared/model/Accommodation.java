@@ -1,5 +1,8 @@
 package com.slapovizrmanje.shared.model;
 
+import com.slapovizrmanje.shared.model.enums.AccommodationState;
+import com.slapovizrmanje.shared.model.enums.AccommodationType;
+import com.slapovizrmanje.shared.model.enums.Language;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
@@ -7,6 +10,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbParti
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSortKey;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @Setter
 @Builder
@@ -15,21 +19,25 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class CampRequest {
+public class Accommodation {
   // TODO Check when we add other entities in the same table, if he reserved for camp, he should be able to reserve for room e.g.
   private String id;
   @EqualsAndHashCode.Include
   private String email;
+  @EqualsAndHashCode.Include
+  private AccommodationType type;
+  private AccommodationState state;
+  private Language language;
+  private String code;
   private String firstName;
   private String lastName;
   private CampGuests guests;
-  private CampLodging lodging;
+  private Map<String, Integer> lodging;
   private boolean powerSupply;
   @EqualsAndHashCode.Include
   private LocalDate startDate;
   @EqualsAndHashCode.Include
   private LocalDate endDate;
-  private boolean isVerified;
   private long createdAt;
 
   @DynamoDbPartitionKey()
@@ -40,6 +48,26 @@ public class CampRequest {
   @DynamoDbSortKey()
   public String getId() {
     return id;
+  }
+
+  @DynamoDbAttribute("code")
+  public String getCode() {
+    return code;
+  }
+
+  @DynamoDbAttribute("type")
+  public AccommodationType getType() {
+    return type;
+  }
+
+  @DynamoDbAttribute("state")
+  public AccommodationState getState() {
+    return state;
+  }
+
+  @DynamoDbAttribute("language")
+  public Language getLanguage() {
+    return language;
   }
 
   @DynamoDbAttribute("first_name")
@@ -58,7 +86,7 @@ public class CampRequest {
   }
 
   @DynamoDbAttribute("lodging")
-  public CampLodging getLodging() {
+  public Map<String, Integer> getLodging() {
     return lodging;
   }
 
@@ -75,11 +103,6 @@ public class CampRequest {
   @DynamoDbAttribute("end_date")
   public LocalDate getEndDate() {
     return endDate;
-  }
-
-  @DynamoDbAttribute("verified")
-  public boolean isVerified() {
-    return isVerified;
   }
 
   @DynamoDbAttribute("created_at")
