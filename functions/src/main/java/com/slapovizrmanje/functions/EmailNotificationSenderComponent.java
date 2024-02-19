@@ -48,7 +48,7 @@ public class EmailNotificationSenderComponent {
         // TODO Consider also responding based on preferable language
         // TODO Upgrade HTML with additional info in Notification
         String verificationText = String.format(
-                "Verify your camp reservation: %s/api/verification/verify?email=%s&id=%s&code=%s.",
+                "Verify your camp reservation: %s/verify?email=%s&id=%s&code=%s.",
                 url,
                 accommodation.getEmail(),
                 accommodation.getId(),
