@@ -12,6 +12,8 @@ public class Translator {
     private String bye;
     private String verifyButton;
     private String verifyText;
+    private String verifyConfirmText;
+    private String verifyConfirmParagraph;
     private String notification;
     @Getter(AccessLevel.PRIVATE)
     private String camp;
@@ -46,6 +48,8 @@ public class Translator {
             .bye("Best regards")
             .verifyButton("Verify request")
             .verifyText("Verify your %s request!")
+            .verifyConfirmText("Successfully confirmed %s request")
+            .verifyConfirmParagraph("Your %s request number - <b>%s</b> has been successfully confirmed ✅ You can expect the feedback soon.")
             .notification("Notification")
             .camp("camp")
             .apartment("apartment")
@@ -74,6 +78,8 @@ public class Translator {
             .bye("Srda&#269;an pozdrav")
             .verifyButton("Potvrdi zahtev")
             .verifyText("Potvrdite svoj zahtev za %s!")
+            .verifyConfirmText("Uspešno potvrdjen zahtev za %s!")
+            .verifyConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je uspesno potvrdjen ✅ Mozete ocekivati odgovor uskoro.")
             .notification("Obavestenje")
             .camp("kamp")
             .apartment("apartman")

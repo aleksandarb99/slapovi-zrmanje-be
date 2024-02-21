@@ -79,7 +79,7 @@ public class FunctionsConfig {
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
                 "\"type\": \"ROOM\", " +
-                "\"state\": \"EMAIL_NOT_VERIFIED\", " +
+                "\"state\": \"EMAIL_VERIFIED\", " +
                 "\"language\": \"EN\", " +
                 "\"firstName\": \"Jovan\", " +
                 "\"lastName\": \"Simic\", " +
@@ -89,7 +89,7 @@ public class FunctionsConfig {
                 "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
                 "\"lodging\": {\"room1\": 1}, " +
 //                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 2}, " +
-                "\"id\": \"testRecordId123\"}");
+                "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}");
 
         // Create SQSEvent
         SQSEvent sqsEvent = new SQSEvent();
