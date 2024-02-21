@@ -78,13 +78,17 @@ public class FunctionsConfig {
         SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
-                "\"type\": \"CAMP\", " +
+                "\"type\": \"ROOM\", " +
+                "\"state\": \"EMAIL_NOT_VERIFIED\", " +
+                "\"language\": \"EN\", " +
                 "\"firstName\": \"Jovan\", " +
                 "\"lastName\": \"Simic\", " +
                 "\"startDate\": \"2024-02-16\", " +
                 "\"endDate\": \"2024-02-17\", " +
+                "\"powerSupply\": true, " +
                 "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
-                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 0}, " +
+                "\"lodging\": {\"room1\": 1}, " +
+//                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleeping_bag\": 2}, " +
                 "\"id\": \"testRecordId123\"}");
 
         // Create SQSEvent

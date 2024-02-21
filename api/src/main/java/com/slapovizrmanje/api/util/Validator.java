@@ -1,7 +1,6 @@
 package com.slapovizrmanje.api.util;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
-import com.slapovizrmanje.shared.dto.CampGuestsDTO;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
