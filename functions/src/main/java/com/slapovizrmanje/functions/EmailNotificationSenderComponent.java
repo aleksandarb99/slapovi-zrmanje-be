@@ -30,10 +30,12 @@ public class EmailNotificationSenderComponent {
     private final String url = "https://d3gxkr4tgt0zlg.cloudfront.net";
     private final AmazonSimpleEmailService sesClient;
     private final ObjectMapper objectMapper;
-    private static final String UTF_8 = "UTF-8";
     private static Translator translator;
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final String LI_TEMPLATE = "<li>%s: %d</li>";
+    private static final String UTF_8 = "UTF-8";
+    // TODO: Ovde ce biti s sajta naseg, tj domena
+    private static final String SOURCE_EMAIL = "jovansimic995@gmail.com";
 
     public Function<SQSEvent, SQSEvent> sendEmailNotification() {
         return emailNotificationsEvent -> {
@@ -41,65 +43,42 @@ public class EmailNotificationSenderComponent {
                 try {
                     final Accommodation accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
                     log.info(String.format("Received accommodation: %s", accommodation));
-                    translator = choseTranslator(accommodation.getLanguage());
+                    translator = chooseTranslator(accommodation.getLanguage());
                     if (accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
                         sendVerificationEmail(accommodation);
+                    } else if(accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
+                        sendVerificationConfirmEmail(accommodation);
+//                        sendRequestToAdminEmail(accommodation);
                     } else {
                         log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
                 } catch (final JsonProcessingException e) {
                     log.error("Unexpected accommodation type", e);
+                } catch (final IOException e) {
+                    log.error(String.format("Error sending email notification...Error message: %s", e.getMessage()));
                 }
             });
             return emailNotificationsEvent;
         };
     }
 
-    private void sendVerificationEmail(final Accommodation accommodation) {
-        String emailBody = "";
-        try {
-            final String verificationLink = String.format("%s/verify?email=%s&id=%s&code=%s",
-                    url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
-            final String infoParagraph = generateInfoParagraph(accommodation);
-            final File resource = ResourceUtils.getFile("classpath:email-template.html");
-            final String template = new String(Files.readAllBytes(resource.toPath()));
-            final String verifyText = String.format(translator.getVerifyText(), translator.getAccommodation(accommodation.getType()));
-            emailBody = String.format(template, verifyText, translator.getHello(), infoParagraph, verificationLink, translator.getVerifyButton(), translator.getBye());
-        } catch (final IOException e) {
-            log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
-        }
+    private void sendVerificationEmail(final Accommodation accommodation) throws IOException {
+        final String template = readTemplate("verification-request-email-template.html");
+        final String verificationHeader = String.format(translator.getVerifyText(), translator.getAccommodation(accommodation.getType()));
+        final String verificationText = generateVerificationText(accommodation);
+        final String verificationLink = String.format("%s/verify?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
+        final String emailBody = String.format(template, verificationHeader, translator.getHello(), verificationText, verificationLink, translator.getVerifyButton(), translator.getBye());
 
-        Body bodyContent = new Body().withHtml(new Content().withCharset(UTF_8).withData(emailBody));
-        Message message = new Message()
-                .withBody(bodyContent)
-                .withSubject(new Content().withCharset(UTF_8).withData(String.format("Slapovi Zrmanje %s", translator.getNotification())));
-
-//        TODO: Ovde ce biti s sajta naseg, tj domena
-        String source = "jovansimic995@gmail.com";
-        Destination destination = new Destination().withToAddresses(accommodation.getEmail());
-
-        try {
-            SendEmailRequest request = new SendEmailRequest()
-                    .withSource(source)
-                    .withDestination(destination)
-                    .withMessage(message);
-            log.info("Sending an email via SES.");
-            sesClient.sendEmail(request);
-            log.info("Email has been sent.");
-        } catch (final Exception e) {
-            log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
-        }
+        sendEmail(accommodation.getEmail(), emailBody);
     }
 
-    private String generateInfoParagraph(final Accommodation accommodation) {
-        return generateVerificationText(accommodation);
-//        return switch (accommodation.get()) {
-//            case CAMP -> generateVerificationText(accommodation);
-//            case CAMP_VERIFY ->
-//                    String.format("Rok za uplatu u grupi <b>%s</b> se bli&#382;i - <b>%s</b>. Info za uplatu mo&#382;e&#353; videti u aplikaciji.",
-//                            notification.getGroupName(), notification.getDeadline());
-//            case CAMP_VERIFY -> null;
-//        };
+    private void sendVerificationConfirmEmail(final Accommodation accommodation) throws IOException {
+        final String template = readTemplate("verification-confirm-email-template.html");
+        final String verificationConfirmHeader = String.format(translator.getVerifyConfirmText(), translator.getAccommodation(accommodation.getType()));
+        final String verificationConfirmText = generateVerificationConfirmText(accommodation);
+        final String emailBody = String.format(template, verificationConfirmHeader, translator.getHello(), verificationConfirmText, translator.getBye());
+
+        sendEmail(accommodation.getEmail(), emailBody);
     }
 
     private String generateVerificationText(final Accommodation accommodation) {
@@ -143,7 +122,31 @@ public class EmailNotificationSenderComponent {
                 );
     }
 
-    private Translator choseTranslator(Language language) {
+    private String generateVerificationConfirmText(final Accommodation accommodation) {
+        return String.format(translator.getVerifyConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());
+    }
+
+    private void sendEmail(String destinationEmailAddress, String emailBody) {
+        Body bodyContent = new Body().withHtml(new Content().withCharset(UTF_8).withData(emailBody));
+        Message message = new Message()
+                .withBody(bodyContent)
+                .withSubject(new Content().withCharset(UTF_8).withData(String.format("Slapovi Zrmanje %s", translator.getNotification())));
+        Destination destination = new Destination().withToAddresses(destinationEmailAddress);
+
+        try {
+            SendEmailRequest request = new SendEmailRequest()
+                    .withSource(SOURCE_EMAIL)
+                    .withDestination(destination)
+                    .withMessage(message);
+            log.info("Sending an email via SES.");
+            sesClient.sendEmail(request);
+            log.info("Email has been sent.");
+        } catch (final Exception e) {
+            log.error(String.format("Error sending email notification...\nError message: %s", e.getMessage()));
+        }
+    }
+
+    private Translator chooseTranslator(Language language) {
         switch (language) {
             case HR -> {
                 return Translator.croatianTranslations;
@@ -157,16 +160,9 @@ public class EmailNotificationSenderComponent {
         }
     }
 
-    //        StringBuilder lodgingBuilder = new StringBuilder("Lodging:<ul>");
-//        accommodation.getLodging().forEach((key, value) -> {
-//            if (value > 0) {
-//                lodgingBuilder.append("<li>");
-//                lodgingBuilder.append(key.substring(0,1).toUpperCase());
-//                lodgingBuilder.append(!key.equals("sleeping_bag") ? key.substring(1) : Arrays.toString(key.substring(1).split("_")));
-//                lodgingBuilder.append(": ");
-//                lodgingBuilder.append(value);
-//                lodgingBuilder.append("</li>");
-//            }
-//        });
-//        lodgingBuilder.append("</ul>");
+    private String readTemplate(String templateName) throws IOException {
+        final String templatePath = String.format("classpath:%s", templateName);
+        final File resource = ResourceUtils.getFile(templatePath);
+        return new String(Files.readAllBytes(resource.toPath()));
+    }
 }
