@@ -11,7 +11,7 @@ import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
 @Setter
 @EqualsAndHashCode
 @ToString
-public class CampGuests {
+public class Guests {
   private int adults;
   private int children;
   private int infants;
