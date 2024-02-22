@@ -103,7 +103,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
-
         <!-- AWS SDK -->
         <dependency>
             <groupId>com.amazonaws</groupId>

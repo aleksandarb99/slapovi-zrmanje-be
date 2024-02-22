@@ -31,7 +31,7 @@ public class Accommodation {
   private String code;
   private String firstName;
   private String lastName;
-  private CampGuests guests;
+  private Guests guests;
   private Map<String, Integer> lodging;
   private boolean powerSupply;
   @EqualsAndHashCode.Include
@@ -81,7 +81,7 @@ public class Accommodation {
   }
 
   @DynamoDbAttribute("guests")
-  public CampGuests getGuests() {
+  public Guests getGuests() {
     return guests;
   }
 

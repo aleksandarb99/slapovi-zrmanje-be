@@ -2,11 +2,9 @@ package com.slapovizrmanje.shared.mapper;
 
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
-import com.slapovizrmanje.shared.dto.CampGuestsDTO;
-import com.slapovizrmanje.shared.dto.CampLodgingDTO;
+import com.slapovizrmanje.shared.dto.GuestsDTO;
 import com.slapovizrmanje.shared.model.Accommodation;
-import com.slapovizrmanje.shared.model.CampGuests;
-import com.slapovizrmanje.shared.model.CampLodging;
+import com.slapovizrmanje.shared.model.Guests;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import com.slapovizrmanje.shared.model.enums.Language;
@@ -15,7 +13,6 @@ import org.mapstruct.Mapper;
 
 import java.time.LocalDate;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.FIELD)
@@ -23,12 +20,10 @@ public interface AccommodationMapper {
 
   Accommodation toEntity(AccommodationRequestDTO accommodationRequestDTO);
 
-  CampGuests toEntity(CampGuestsDTO campGuestsDTO);
-
-  CampLodging toEntity(CampLodgingDTO campLodgingDTO);
+  Guests toEntity(GuestsDTO guestsDTO);
 
   default Accommodation toEntity(Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> item) {
-    CampGuests guest = CampGuests.builder()
+    Guests guest = Guests.builder()
             .adults(Integer.parseInt(item.get("guests").m().get("adults").n()))
             .children(Integer.parseInt(item.get("guests").m().get("children").n()))
             .infants(Integer.parseInt(item.get("guests").m().get("infants").n()))
@@ -60,9 +55,7 @@ public interface AccommodationMapper {
   }
 
   default Accommodation eventToAccommodation(Map<String, AttributeValue> event) {
-    System.out.println(event);
-
-    CampGuests guests = CampGuests.builder()
+    Guests guests = Guests.builder()
             .adults(Integer.parseInt(event.get("guests").getM().get("adults").getN()))
             .children(Integer.parseInt(event.get("guests").getM().get("children").getN()))
             .infants(Integer.parseInt(event.get("guests").getM().get("infants").getN()))
