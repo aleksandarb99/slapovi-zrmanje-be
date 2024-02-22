@@ -47,8 +47,8 @@ public class EmailNotificationSenderComponent {
                     if (accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
                         sendVerificationEmail(accommodation);
                     } else if(accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-                        sendVerificationConfirmEmail(accommodation);
-//                        sendRequestToAdminEmail(accommodation);
+//                        sendVerificationConfirmEmail(accommodation);
+                        sendAccommodationRequestEmail(accommodation);
                     } else {
                         log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
@@ -65,9 +65,9 @@ public class EmailNotificationSenderComponent {
     private void sendVerificationEmail(final Accommodation accommodation) throws IOException {
         final String template = readTemplate("verification-request-email-template.html");
         final String verificationHeader = String.format(translator.getVerifyText(), translator.getAccommodation(accommodation.getType()));
-        final String verificationText = generateVerificationText(accommodation);
+        final String accommodationSummary = generateAccommodationSummaryText(accommodation);
         final String verificationLink = String.format("%s/verify?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
-        final String emailBody = String.format(template, verificationHeader, translator.getHello(), verificationText, verificationLink, translator.getVerifyButton(), translator.getBye());
+        final String emailBody = String.format(template, verificationHeader, translator.getHello(), accommodationSummary, verificationLink, translator.getVerifyButton(), translator.getBye());
 
         sendEmail(accommodation.getEmail(), emailBody);
     }
@@ -81,7 +81,19 @@ public class EmailNotificationSenderComponent {
         sendEmail(accommodation.getEmail(), emailBody);
     }
 
-    private String generateVerificationText(final Accommodation accommodation) {
+    private void sendAccommodationRequestEmail(final Accommodation accommodation) throws IOException {
+        translator = Translator.croatianTranslations;
+        final String template = readTemplate("accommodation-request-email-template.html");
+        final String accommodationType = translator.getAccommodation(accommodation.getType());
+        final String accommodationSummary = generateAccommodationSummaryText(accommodation);
+        final String rejectionLink = String.format("%s/reject?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
+        final String acceptanceLink = String.format("%s/accept?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
+        final String emailBody = String.format(template, accommodationType, accommodationSummary, rejectionLink, acceptanceLink);
+
+        sendEmail(accommodation.getEmail(), emailBody);
+    }
+
+    private String generateAccommodationSummaryText(final Accommodation accommodation) {
         Guests guests = accommodation.getGuests();
         String guestsString = translator.getGuests() + ":<ul>" +
                 (guests.getAdults() > 0 ? String.format(LI_TEMPLATE, translator.getAdults(), guests.getAdults()) : "") +
