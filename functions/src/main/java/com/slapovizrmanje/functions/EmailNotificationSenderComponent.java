@@ -49,6 +49,10 @@ public class EmailNotificationSenderComponent {
                     } else if(accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
 //                        sendVerificationConfirmEmail(accommodation);
                         sendAccommodationRequestEmail(accommodation);
+                    } else if(accommodation.getState().equals(AccommodationState.NOT_AVAILABLE)) {
+                        sendRejectedAccommodationRequestEmail(accommodation);
+                    } else if(accommodation.getState().equals(AccommodationState.AVAILABLE)) {
+                        sendAcceptedAccommodationRequestEmail(accommodation);
                     } else {
                         log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
@@ -91,6 +95,14 @@ public class EmailNotificationSenderComponent {
         final String emailBody = String.format(template, accommodationType, accommodationSummary, rejectionLink, acceptanceLink);
 
         sendEmail(accommodation.getEmail(), emailBody);
+    }
+
+    private void sendRejectedAccommodationRequestEmail(Accommodation accommodation) {
+//        TODO: Send email here
+    }
+
+    private void sendAcceptedAccommodationRequestEmail(Accommodation accommodation) {
+        //        TODO: Send email here
     }
 
     private String generateAccommodationSummaryText(final Accommodation accommodation) {

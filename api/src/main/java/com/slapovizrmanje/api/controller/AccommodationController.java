@@ -17,6 +17,16 @@ public class AccommodationController {
 
     private final AccommodationService accommodationService;
 
+    @GetMapping("/accept")
+    public void acceptAccommodation(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+        log.info("ACCOMMODATION SERVICE - Accept request.");
+        accommodationService.acceptAccommodation(email, id, code);
+    }
+    @GetMapping("/reject")
+    public void rejectAccommodation(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+        log.info("ACCOMMODATION SERVICE - Reject request.");
+        accommodationService.rejectAccommodation(email, id, code);
+    }
     @GetMapping("/verify")
     public void verifyEmail(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
         log.info("ACCOMMODATION SERVICE - Verify email.");
