@@ -166,6 +166,8 @@ public class AccommodationService {
       throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
     }
 
+//    TODO: Proveri da li je buducnost
+
     accommodation.setState(AccommodationState.RESERVED);
     accommodation.setCode(UUID.randomUUID().toString());
 
@@ -192,6 +194,9 @@ public class AccommodationService {
     if (!accommodation.getCode().equals(code)) {
       throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
     }
+
+//    TODO: Proveri da li je buducnost
+//TODO: Ne moze se otkazati ako je proslost
 
     accommodation.setState(AccommodationState.CANCELED);
 
