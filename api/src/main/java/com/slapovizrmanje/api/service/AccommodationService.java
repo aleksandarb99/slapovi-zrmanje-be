@@ -113,6 +113,7 @@ public class AccommodationService {
     }
 
     accommodation.setState(AccommodationState.NOT_AVAILABLE);
+    accommodation.setCode(UUID.randomUUID().toString());
 
     log.info(String.format("ACCOMMODATION DAO - Reject accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
@@ -139,6 +140,7 @@ public class AccommodationService {
     }
 
     accommodation.setState(AccommodationState.AVAILABLE);
+    accommodation.setCode(UUID.randomUUID().toString());
 
     log.info(String.format("ACCOMMODATION DAO - Accept accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
