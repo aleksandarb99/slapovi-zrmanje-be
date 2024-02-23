@@ -92,4 +92,56 @@ public class AccommodationService {
     accommodationDao.update(accommodation);
     log.info("Successfully verified!");
   }
+
+  public void rejectAccommodation(String email, String id, String code) {
+    log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
+    List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
+    log.info(String.format("Found entities: %s", foundEntities));
+
+    if (foundEntities.isEmpty()) {
+      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+    }
+
+    Accommodation accommodation = foundEntities.get(0);
+
+    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
+      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+    }
+
+    if (!accommodation.getCode().equals(code)) {
+      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+    }
+
+    accommodation.setState(AccommodationState.NOT_AVAILABLE);
+
+    log.info(String.format("ACCOMMODATION DAO - Reject accommodation: %s.", accommodation));
+    accommodationDao.update(accommodation);
+    log.info("Successfully rejected!");
+  }
+
+  public void acceptAccommodation(String email, String id, String code) {
+    log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
+    List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
+    log.info(String.format("Found entities: %s", foundEntities));
+
+    if (foundEntities.isEmpty()) {
+      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+    }
+
+    Accommodation accommodation = foundEntities.get(0);
+
+    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
+      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+    }
+
+    if (!accommodation.getCode().equals(code)) {
+      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+    }
+
+    accommodation.setState(AccommodationState.AVAILABLE);
+
+    log.info(String.format("ACCOMMODATION DAO - Accept accommodation: %s.", accommodation));
+    accommodationDao.update(accommodation);
+    log.info("Successfully accepted!");
+  }
 }
