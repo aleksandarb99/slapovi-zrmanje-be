@@ -16,16 +16,26 @@ import org.springframework.web.bind.annotation.*;
 public class AccommodationController {
 
     private final AccommodationService accommodationService;
+    @GetMapping("/cancel")
+    public void cancel(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+        log.info("ACCOMMODATION SERVICE - Cancel request.");
+        accommodationService.cancel(email, id, code);
+    }
+    @GetMapping("/reserve")
+    public void reserve(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+        log.info("ACCOMMODATION SERVICE - Reserve request.");
+        accommodationService.reserve(email, id, code);
+    }
 
     @GetMapping("/accept")
-    public void acceptAccommodation(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+    public void accept(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
         log.info("ACCOMMODATION SERVICE - Accept request.");
-        accommodationService.acceptAccommodation(email, id, code);
+        accommodationService.accept(email, id, code);
     }
     @GetMapping("/reject")
-    public void rejectAccommodation(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
+    public void reject(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
         log.info("ACCOMMODATION SERVICE - Reject request.");
-        accommodationService.rejectAccommodation(email, id, code);
+        accommodationService.reject(email, id, code);
     }
     @GetMapping("/verify")
     public void verifyEmail(@RequestParam String email, @RequestParam String id, @RequestParam String code) {

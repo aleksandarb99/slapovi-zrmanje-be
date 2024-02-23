@@ -93,7 +93,7 @@ public class AccommodationService {
     log.info("Successfully verified!");
   }
 
-  public void rejectAccommodation(String email, String id, String code) {
+  public void reject(String email, String id, String code) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
     log.info(String.format("Found entities: %s", foundEntities));
@@ -120,7 +120,7 @@ public class AccommodationService {
     log.info("Successfully rejected!");
   }
 
-  public void acceptAccommodation(String email, String id, String code) {
+  public void accept(String email, String id, String code) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
     log.info(String.format("Found entities: %s", foundEntities));
@@ -145,5 +145,58 @@ public class AccommodationService {
     log.info(String.format("ACCOMMODATION DAO - Accept accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
     log.info("Successfully accepted!");
+  }
+
+  public void reserve(String email, String id, String code) {
+    log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
+    List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
+    log.info(String.format("Found entities: %s", foundEntities));
+
+    if (foundEntities.isEmpty()) {
+      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+    }
+
+    Accommodation accommodation = foundEntities.get(0);
+
+    if (!accommodation.getState().equals(AccommodationState.AVAILABLE)) {
+      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+    }
+
+    if (!accommodation.getCode().equals(code)) {
+      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+    }
+
+    accommodation.setState(AccommodationState.RESERVED);
+    accommodation.setCode(UUID.randomUUID().toString());
+
+    log.info(String.format("ACCOMMODATION DAO - Reserved accommodation: %s.", accommodation));
+    accommodationDao.update(accommodation);
+    log.info("Successfully reserved!");
+  }
+
+  public void cancel(String email, String id, String code) {
+    log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
+    List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
+    log.info(String.format("Found entities: %s", foundEntities));
+
+    if (foundEntities.isEmpty()) {
+      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+    }
+
+    Accommodation accommodation = foundEntities.get(0);
+
+    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+    }
+
+    if (!accommodation.getCode().equals(code)) {
+      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+    }
+
+    accommodation.setState(AccommodationState.CANCELED);
+
+    log.info(String.format("ACCOMMODATION DAO - Canceled accommodation: %s.", accommodation));
+    accommodationDao.update(accommodation);
+    log.info("Successfully canceled!");
   }
 }

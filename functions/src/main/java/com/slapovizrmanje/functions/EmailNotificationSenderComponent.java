@@ -53,6 +53,12 @@ public class EmailNotificationSenderComponent {
                         sendRejectedAccommodationRequestEmail(accommodation);
                     } else if(accommodation.getState().equals(AccommodationState.AVAILABLE)) {
                         sendAcceptedAccommodationRequestEmail(accommodation);
+                    } else if(accommodation.getState().equals(AccommodationState.RESERVED)) {
+                        sendReservedConfirmEmail(accommodation);
+                        sendReservedAccommodationRequestEmail(accommodation);
+                    } else if(accommodation.getState().equals(AccommodationState.CANCELED)) {
+                        sendCanceledConfirmEmail(accommodation);
+                        sendCanceledAccommodationRequestEmail(accommodation);
                     } else {
                         log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
@@ -102,6 +108,22 @@ public class EmailNotificationSenderComponent {
     }
 
     private void sendAcceptedAccommodationRequestEmail(Accommodation accommodation) {
+        //        TODO: Send email here
+    }
+
+    private void sendReservedAccommodationRequestEmail(Accommodation accommodation) {
+        //        TODO: Send email here
+    }
+
+    private void sendReservedConfirmEmail(Accommodation accommodation) {
+        //        TODO: Send email here
+    }
+
+    private void sendCanceledAccommodationRequestEmail(Accommodation accommodation) {
+        //        TODO: Send email here
+    }
+
+    private void sendCanceledConfirmEmail(Accommodation accommodation) {
         //        TODO: Send email here
     }
 
