@@ -2,20 +2,27 @@ package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.dao.AccommodationDao;
 import com.slapovizrmanje.api.exception.NotFoundException;
+import com.slapovizrmanje.api.util.Prices;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.api.util.TimeProvider;
 import com.slapovizrmanje.api.util.Validator;
 import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.shared.dto.PriceItemDTO;
+import com.slapovizrmanje.shared.dto.PriceResponseDTO;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
+import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 @Service
@@ -23,8 +30,138 @@ import java.util.UUID;
 public class AccommodationService {
   private final AccommodationMapper accommodationMapper;
   private final AccommodationDao accommodationDao;
+  private final String priceItemTemplate = "%s  X %s    X %s nights";
 
-//  TODO: Maybe have uuid in validationId field
+  public PriceResponseDTO checkPrice(AccommodationRequestDTO accommodationRequestDTO) {
+//    TODO: Validiraj
+
+
+    PriceResponseDTO dto = PriceResponseDTO.builder()
+            .priceItems(new ArrayList<>())
+            .build();
+
+    double totalPrice = 0;
+    if (accommodationRequestDTO.getType().equals(AccommodationType.CAMP)) {
+      long numberOfNights = DAYS.between(accommodationRequestDTO.getStartDate(), accommodationRequestDTO.getEndDate());
+      log.info(String.format("ACCOMMODATION - Number of nights is %s.", numberOfNights));
+
+      int adults = accommodationRequestDTO.getGuests().getAdults();
+      if (adults != 0) {
+        double price = Prices.adultsPrice * numberOfNights * adults;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("jjjj"), adults, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int children = accommodationRequestDTO.getGuests().getChildren();
+      if (children != 0) {
+        double price = Prices.childrenPrice * numberOfNights * children;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Children"), children, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int infants = accommodationRequestDTO.getGuests().getInfants();
+      if (infants != 0) {
+        double price = Prices.infantsPrice * numberOfNights * infants;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Infants"), infants, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int pets = accommodationRequestDTO.getGuests().getPets();
+      if (pets != 0) {
+        double price = Prices.petsPrice * numberOfNights * pets;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Pet"), pets, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int caravan = accommodationRequestDTO.getLodging().get("caravan");
+      if (caravan != 0) {
+        double price = Prices.caravanPrice * numberOfNights * caravan;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Caravan"), caravan, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int tent = accommodationRequestDTO.getLodging().get("tent");
+      if (tent != 0) {
+        double price = Prices.tentPrice * numberOfNights * tent;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Tent"), tent, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int car = accommodationRequestDTO.getLodging().get("car");
+      if (car != 0) {
+        double price = Prices.carPrice * numberOfNights * car;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("Car"), car, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      int speepingBag = accommodationRequestDTO.getLodging().get("speepingBag");
+      if (speepingBag != 0) {
+        double price = Prices.speepingBagPrice * numberOfNights * speepingBag;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("SleepingBag"), speepingBag, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+      if (accommodationRequestDTO.isPowerSupply()) {
+        double price = Prices.powerSupplyCost;
+        PriceItemDTO itemDTO = PriceItemDTO.builder()
+                .name(String.format(priceItemTemplate, getItemName("PowerSupply"), 1, numberOfNights))
+                .price(price)
+                .build();
+
+        totalPrice += price;
+        dto.getPriceItems().add(itemDTO);
+      }
+    }
+    if (accommodationRequestDTO.getType().equals(AccommodationType.APARTMENT)) {
+
+    }
+    if (accommodationRequestDTO.getType().equals(AccommodationType.ROOM)) {
+
+    }
+
+//    TODO: Pripremi iteme i sortiraj ih
+
+    dto.setTotalPrice(totalPrice);
+    return dto;
+  }
+
+  private String getItemName(String name) {
+    int length = name.length();
+    int missingWhiteSpaceNumber = 18 - length;
+    return name + " " .repeat(missingWhiteSpaceNumber);
+  }
   public void checkAvailability(AccommodationRequestDTO accommodationRequestDTO) {
     Validator.validateObjectToContainAtLeastOnePositive(accommodationRequestDTO.getGuests());
     Validator.validateMapToContainAtLeastOnePositive(accommodationRequestDTO.getLodging());
@@ -93,6 +230,7 @@ public class AccommodationService {
     log.info("Successfully verified!");
   }
 
+//  TODO: Kad se radi reject, mozda da se ispisu termini kad moze?
   public void reject(String email, String id, String code) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
@@ -204,4 +342,5 @@ public class AccommodationService {
     accommodationDao.update(accommodation);
     log.info("Successfully canceled!");
   }
+
 }
