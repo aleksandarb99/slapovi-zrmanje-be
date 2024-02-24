@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class PriceItemDTO {
   private String name;
   private int count;
-  private int nights;
+  private long nights;
   private double price;
 }

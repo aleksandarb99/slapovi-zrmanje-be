@@ -10,4 +10,8 @@ public class Prices {
   public static double caravanPrice = 40;
   public static double carPrice = 15;
   public static double speepingBagPrice = 3;
+  public static double apartment1Price = 100;
+  public static double room1Price = 125;
+  public static double room2Price = 150;
+  public static double room3Price = 170;
 }

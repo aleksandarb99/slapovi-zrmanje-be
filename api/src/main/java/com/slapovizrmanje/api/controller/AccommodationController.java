@@ -1,5 +1,6 @@
 package com.slapovizrmanje.api.controller;
 
+import com.slapovizrmanje.api.service.PriceService;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.api.service.AccommodationService;
 import com.slapovizrmanje.shared.dto.PriceResponseDTO;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AccommodationController {
 
     private final AccommodationService accommodationService;
+    private final PriceService priceService;
     @GetMapping("/cancel")
     public void cancel(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
         log.info("ACCOMMODATION SERVICE - Cancel request.");
@@ -53,8 +55,8 @@ public class AccommodationController {
 
     @PostMapping("/check-price")
     public PriceResponseDTO checkPrice(@Valid @RequestBody AccommodationRequestDTO accommodationRequestDTO) {
-        log.info("ACCOMMODATION SERVICE - Check availability.");
-        return accommodationService.checkPrice(accommodationRequestDTO);
+        log.info("PRICE SERVICE - Check price.");
+        return priceService.checkPrice(accommodationRequestDTO);
     }
 
 }
