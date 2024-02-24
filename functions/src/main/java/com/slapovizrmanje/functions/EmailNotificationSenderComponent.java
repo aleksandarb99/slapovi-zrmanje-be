@@ -58,7 +58,7 @@ public class EmailNotificationSenderComponent {
                         sendReservedAccommodationRequestEmail(accommodation);
                     } else if(accommodation.getState().equals(AccommodationState.CANCELED)) {
                         sendCanceledConfirmEmail(accommodation);
-                        sendCanceledAccommodationRequestEmail(accommodation);
+                        sendCanceledAccommodationReservationEmail(accommodation);
                     } else {
                         log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
                     }
@@ -73,7 +73,7 @@ public class EmailNotificationSenderComponent {
     }
 
     private void sendVerificationEmail(final Accommodation accommodation) throws IOException {
-        final String template = readTemplate("verification-request-email-template.html");
+        final String template = readTemplate("one-button-email-template.html");
         final String verificationHeader = String.format(translator.getVerifyText(), translator.getAccommodation(accommodation.getType()));
         final String accommodationSummary = generateAccommodationSummaryText(accommodation);
         final String verificationLink = String.format("%s/verify?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
@@ -83,7 +83,7 @@ public class EmailNotificationSenderComponent {
     }
 
     private void sendVerificationConfirmEmail(final Accommodation accommodation) throws IOException {
-        final String template = readTemplate("verification-confirm-email-template.html");
+        final String template = readTemplate("no-buttons-email-template.html");
         final String verificationConfirmHeader = String.format(translator.getVerifyConfirmText(), translator.getAccommodation(accommodation.getType()));
         final String verificationConfirmText = generateVerificationConfirmText(accommodation);
         final String emailBody = String.format(template, verificationConfirmHeader, translator.getHello(), verificationConfirmText, translator.getBye());
@@ -93,7 +93,7 @@ public class EmailNotificationSenderComponent {
 
     private void sendAccommodationRequestEmail(final Accommodation accommodation) throws IOException {
         translator = Translator.croatianTranslations;
-        final String template = readTemplate("accommodation-request-email-template.html");
+        final String template = readTemplate("two-buttons-email-template.html");
         final String accommodationType = translator.getAccommodation(accommodation.getType());
         final String accommodationSummary = generateAccommodationSummaryText(accommodation);
         final String rejectionLink = String.format("%s/reject?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
@@ -103,12 +103,17 @@ public class EmailNotificationSenderComponent {
         sendEmail(accommodation.getEmail(), emailBody);
     }
 
-    // TODO: Send email here, na kraju
-    private void sendRejectedAccommodationRequestEmail(Accommodation accommodation) {
+    private void sendRejectedAccommodationRequestEmail(Accommodation accommodation) throws IOException {
+        final String template = readTemplate("no-buttons-email-template.html");
+        final String rejectionHeader = String.format(translator.getRejectConfirmText(), translator.getAccommodation(accommodation.getType()));
+        final String rejectionConfirmText = generateRejectionConfirmText(accommodation);
+        final String emailBody = String.format(template, rejectionHeader, translator.getHello(), rejectionConfirmText, translator.getBye());
+
+        sendEmail(accommodation.getEmail(), emailBody);
     }
 
     private void sendAcceptedAccommodationRequestEmail(Accommodation accommodation) throws IOException  {
-        final String template = readTemplate("verification-request-email-template.html");
+        final String template = readTemplate("one-button-email-template.html");
         final String reservationHeader = String.format(translator.getReserveText(), translator.getAccommodation(accommodation.getType()));
         final String accommodationSummary = generateAccommodationSummaryText(accommodation);
         final String reservationLink = String.format("%s/reserve?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
@@ -119,16 +124,16 @@ public class EmailNotificationSenderComponent {
 
     private void sendReservedAccommodationRequestEmail(Accommodation accommodation) throws IOException {
         translator = Translator.croatianTranslations;
-        final String template = readTemplate("verification-confirm-email-template.html");
+        final String template = readTemplate("no-buttons-email-template.html");
         final String verificationConfirmHeader = String.format("Rezervacija za %s je prihvacena", translator.getAccommodation(accommodation.getType()));
         final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
-        final String emailBody = String.format(template, verificationConfirmHeader, "Zdravo Mladene, pregled rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
+        final String emailBody = String.format(template, verificationConfirmHeader, "Zdravo Ziko, pregled rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
 
         sendEmail(accommodation.getEmail(), emailBody);
     }
 
     private void sendReservedConfirmEmail(Accommodation accommodation) throws IOException {
-        final String template = readTemplate("verification-request-email-template.html");
+        final String template = readTemplate("one-button-email-template.html");
         final String reservationConfirmHeader = String.format(translator.getReserveConfirmText(), translator.getAccommodation(accommodation.getType()));
         final String reservationConfirmText = generateReservationConfirmText(accommodation);
         final String cancellationLink = String.format("%s/cancel?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
@@ -137,12 +142,23 @@ public class EmailNotificationSenderComponent {
         sendEmail(accommodation.getEmail(), emailBody);
     }
 
-    private void sendCanceledAccommodationRequestEmail(Accommodation accommodation) {
-        //        TODO: Send email here
+    private void sendCanceledAccommodationReservationEmail(Accommodation accommodation) throws IOException {
+        translator = Translator.croatianTranslations;
+        final String template = readTemplate("no-buttons-email-template.html");
+        final String cancellationConfirmHeader = String.format("Rezervacija za %s je otkazana", translator.getAccommodation(accommodation.getType()));
+        final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
+        final String emailBody = String.format(template, cancellationConfirmHeader, "Zdravo Ziko, pregled otkazane rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
+
+        sendEmail(accommodation.getEmail(), emailBody);
     }
 
-    private void sendCanceledConfirmEmail(Accommodation accommodation) {
-        //        TODO: Send email here
+    private void sendCanceledConfirmEmail(Accommodation accommodation) throws IOException {
+        final String template = readTemplate("no-buttons-email-template.html");
+        final String cancellationConfirmHeader = String.format(translator.getCancelConfirmText(), translator.getAccommodation(accommodation.getType()));
+        final String cancellationConfirmText = generateCancellationConfirmText(accommodation);
+        final String emailBody = String.format(template, cancellationConfirmHeader, translator.getHello(), cancellationConfirmText, translator.getBye());
+
+        sendEmail(accommodation.getEmail(), emailBody);
     }
 
     private String generateAccommodationSummaryText(final Accommodation accommodation) {
@@ -188,6 +204,14 @@ public class EmailNotificationSenderComponent {
 
     private String generateVerificationConfirmText(final Accommodation accommodation) {
         return String.format(translator.getVerifyConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());
+    }
+
+    private String generateRejectionConfirmText(final Accommodation accommodation) {
+        return String.format(translator.getRejectConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());
+    }
+
+    private String generateCancellationConfirmText(final Accommodation accommodation) {
+        return String.format(translator.getCancelConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());
     }
 
     private String generateReservationConfirmText(final Accommodation accommodation) {

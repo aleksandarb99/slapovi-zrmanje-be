@@ -18,8 +18,12 @@ public class Translator {
     private String reserveText;
     private String verifyConfirmText;
     private String reserveConfirmText;
+    private String cancelConfirmText;
+    private String rejectConfirmText;
     private String verifyConfirmParagraph;
     private String reserveConfirmParagraph;
+    private String cancelConfirmParagraph;
+    private String rejectConfirmParagraph;
     private String notification;
     @Getter(AccessLevel.PRIVATE)
     private String camp;
@@ -27,6 +31,10 @@ public class Translator {
     private String apartment;
     @Getter(AccessLevel.PRIVATE)
     private String room;
+    @Getter(AccessLevel.PRIVATE)
+    private String lodgingRoom;
+    @Getter(AccessLevel.PRIVATE)
+    private String lodgingApartment;
     private String firstName;
     private String lastName;
     private String checkIn;
@@ -60,12 +68,18 @@ public class Translator {
             .verifyText("Verify your %s request!")
             .verifyConfirmText("Successfully confirmed %s request")
             .reserveConfirmText("Successfully reserved %s request")
+            .cancelConfirmText("Successfully cancelled %s reservation")
+            .rejectConfirmText("Request for %s has been rejected")
             .verifyConfirmParagraph("Your %s request number - <b>%s</b> has been successfully confirmed ✅ You can expect the feedback soon.")
             .reserveConfirmParagraph("Your %s request number - <b>%s</b> has been successfully reserved ✅ See you soon!\nIf from some reason you are not able to come, please inform us by cancelling your reservation on bellow button.")
+            .cancelConfirmParagraph("Your %s reservation number - <b>%s</b> has been successfully cancelled ✅ Hope we see you next time.")
+            .rejectConfirmParagraph("Your %s request number - <b>%s</b> has been rejected. Probably the chosen days are not available. You can expect in late evening an email with suggested available periods. Thank you for your patience!")
             .notification("Notification")
             .camp("camp")
             .apartment("apartment")
+            .lodgingApartment("Apartment")
             .room("room")
+            .lodgingRoom("Room")
             .checkIn("Check-in date")
             .checkOut("Check-out date")
             .firstName("First Name")
@@ -96,12 +110,18 @@ public class Translator {
             .verifyText("Potvrdite svoj zahtev za %s!")
             .verifyConfirmText("Uspešno potvrdjen zahtev za %s!")
             .reserveConfirmText("Uspešno reservisan zahtev za %s!")
+            .cancelConfirmText("Uspešno otkazana rezervacija za %s!")
+            .rejectConfirmText("Zahtev za %s je odbijen")
             .verifyConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je uspesno potvrdjen ✅ Mozete ocekivati odgovor uskoro.")
             .reserveConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je uspesno reservisan ✅ Vidimo se uskoro!\n Ako iz nekog razloga niste u mogucnosti da dodjete, molimo Vas da nas obavestite, tako sto cete otkazati rezervaciju pritiskom na dugme ispod.")
+            .cancelConfirmParagraph("Vasa rezervacija za %s broj - <b>%s</b> je uspesno otkazana ✅ Nadamo se da se vidimo nekom drugom prilikom.")
+            .rejectConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je odbijen. Najverovatnije izabrani dani nisu dostupni. Mozete ocekivati kasno uvece email sa predlozenim slobodnim terminima. Hvala na razumevanju!")
             .notification("Obavestenje")
             .camp("kamp")
             .apartment("apartman")
+            .lodgingApartment("Apartman")
             .room("sobu")
+            .lodgingRoom("Soba")
             .checkIn("Datum prijave")
             .checkOut("Datum odjave")
             .firstName("Ime")
@@ -147,7 +167,6 @@ public class Translator {
     }
 
     public String getLodgingType(String lodgingKeyFromMap) {
-        // TODO Add more room_1, room_2, apartment_1, apartment_2 etc
         switch (lodgingKeyFromMap) {
             case "car" -> {
                 return getCar();
@@ -161,8 +180,26 @@ public class Translator {
             case "sleeping_bag" -> {
                 return getSleepingBag();
             }
+            case "room1" -> {
+                return String.format("%s 1", getLodgingRoom());
+            }
+            case "room2" -> {
+                return String.format("%s 2", getLodgingRoom());
+            }
+            case "room3" -> {
+                return String.format("%s 3", getLodgingRoom());
+            }
+            case "apartment1" -> {
+                return String.format("%s 1", getLodgingApartment());
+            }
+            case "apartment2" -> {
+                return String.format("%s 2", getLodgingApartment());
+            }
+            case "apartment3" -> {
+                return String.format("%s 3", getLodgingApartment());
+            }
             default -> {
-                return "TODO Change code";
+                return "TODO Model has been changed. Add more mappings!";
             }
         }
     }
