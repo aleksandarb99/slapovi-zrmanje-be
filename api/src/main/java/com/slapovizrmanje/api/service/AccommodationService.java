@@ -2,20 +2,27 @@ package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.dao.AccommodationDao;
 import com.slapovizrmanje.api.exception.NotFoundException;
+import com.slapovizrmanje.api.util.Prices;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.api.util.TimeProvider;
 import com.slapovizrmanje.api.util.Validator;
 import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.shared.dto.PriceItemDTO;
+import com.slapovizrmanje.shared.dto.PriceResponseDTO;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
+import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Slf4j
 @Service
@@ -24,7 +31,6 @@ public class AccommodationService {
   private final AccommodationMapper accommodationMapper;
   private final AccommodationDao accommodationDao;
 
-//  TODO: Maybe have uuid in validationId field
   public void checkAvailability(AccommodationRequestDTO accommodationRequestDTO) {
     Validator.validateObjectToContainAtLeastOnePositive(accommodationRequestDTO.getGuests());
     Validator.validateMapToContainAtLeastOnePositive(accommodationRequestDTO.getLodging());
@@ -93,6 +99,7 @@ public class AccommodationService {
     log.info("Successfully verified!");
   }
 
+//  TODO: Kad se radi reject, mozda da se ispisu termini kad moze?
   public void reject(String email, String id, String code) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email,  id);
@@ -204,4 +211,5 @@ public class AccommodationService {
     accommodationDao.update(accommodation);
     log.info("Successfully canceled!");
   }
+
 }
