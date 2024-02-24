@@ -9,11 +9,17 @@ import lombok.Getter;
 @Builder(access = AccessLevel.PRIVATE)
 public class Translator {
     private String hello;
+    private String reserveHello;
     private String bye;
     private String verifyButton;
+    private String reserveButton;
+    private String cancelButton;
     private String verifyText;
+    private String reserveText;
     private String verifyConfirmText;
+    private String reserveConfirmText;
     private String verifyConfirmParagraph;
+    private String reserveConfirmParagraph;
     private String notification;
     @Getter(AccessLevel.PRIVATE)
     private String camp;
@@ -45,11 +51,17 @@ public class Translator {
 
     public static final Translator englishTranslations = Translator.builder()
             .hello("Hello")
+            .reserveHello("Hello, your request summary once again")
             .bye("Best regards")
             .verifyButton("Verify request")
+            .reserveButton("Reserve")
+            .cancelButton("Cancel")
+            .reserveText("Request has been accepted. Reserve your %s request now!")
             .verifyText("Verify your %s request!")
             .verifyConfirmText("Successfully confirmed %s request")
+            .reserveConfirmText("Successfully reserved %s request")
             .verifyConfirmParagraph("Your %s request number - <b>%s</b> has been successfully confirmed ✅ You can expect the feedback soon.")
+            .reserveConfirmParagraph("Your %s request number - <b>%s</b> has been successfully reserved ✅ See you soon!\nIf from some reason you are not able to come, please inform us by cancelling your reservation on bellow button.")
             .notification("Notification")
             .camp("camp")
             .apartment("apartment")
@@ -75,11 +87,17 @@ public class Translator {
 
     public static final Translator croatianTranslations = Translator.builder()
             .hello("Zdravo")
+            .reserveHello("Zdravo, rezime vaseg zahteva jos jednom")
             .bye("Srda&#269;an pozdrav")
             .verifyButton("Potvrdi zahtev")
+            .reserveButton("Rezervisi")
+            .cancelButton("Otkazi")
+            .reserveText("Zahtev je prihvacen. Rezervisite svoj zahtev za %s sada!")
             .verifyText("Potvrdite svoj zahtev za %s!")
             .verifyConfirmText("Uspešno potvrdjen zahtev za %s!")
+            .reserveConfirmText("Uspešno reservisan zahtev za %s!")
             .verifyConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je uspesno potvrdjen ✅ Mozete ocekivati odgovor uskoro.")
+            .reserveConfirmParagraph("Vas zahtev za %s broj - <b>%s</b> je uspesno reservisan ✅ Vidimo se uskoro!\n Ako iz nekog razloga niste u mogucnosti da dodjete, molimo Vas da nas obavestite, tako sto cete otkazati rezervaciju pritiskom na dugme ispod.")
             .notification("Obavestenje")
             .camp("kamp")
             .apartment("apartman")
