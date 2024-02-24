@@ -79,8 +79,8 @@ public class FunctionsConfig {
         sqsMessage.setMessageId("1");
         sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
                 "\"type\": \"ROOM\", " +
-                "\"state\": \"EMAIL_VERIFIED\", " +
-                "\"language\": \"EN\", " +
+                "\"state\": \"RESERVED\", " +
+                "\"language\": \"HR\", " +
                 "\"firstName\": \"Jovan\", " +
                 "\"lastName\": \"Simic\", " +
                 "\"startDate\": \"2024-02-16\", " +
