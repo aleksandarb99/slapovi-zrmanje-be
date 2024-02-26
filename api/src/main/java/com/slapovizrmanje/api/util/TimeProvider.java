@@ -9,7 +9,7 @@ import java.util.TimeZone;
 @Slf4j
 public class TimeProvider {
 
-    public static LocalDateTime toLocalDateTime(long timestamp) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), TimeZone.getDefault().toZoneId());
-    }
+  public static LocalDateTime toLocalDateTime(long timestamp) {
+    return LocalDateTime.ofInstant(Instant.ofEpochMilli(timestamp), TimeZone.getDefault().toZoneId());
+  }
 }

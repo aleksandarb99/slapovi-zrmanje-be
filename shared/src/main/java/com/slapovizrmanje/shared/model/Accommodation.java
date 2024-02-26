@@ -20,7 +20,6 @@ import java.util.Map;
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Accommodation {
-  // TODO Check when we add other entities in the same table, if he reserved for camp, he should be able to reserve for room e.g.
   private String id;
   @EqualsAndHashCode.Include
   private String email;

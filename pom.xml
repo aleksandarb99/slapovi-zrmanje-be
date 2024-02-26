@@ -33,7 +33,7 @@
         <aws-lambda-events.version>3.9.0</aws-lambda-events.version>
         <aws-lambda-java-core.version>1.1.0</aws-lambda-java-core.version>
         <aws-sqs.version>2.20.38</aws-sqs.version>
-<!--        <aws-ses.version>2.23.0</aws-ses.version>-->
+        <!--        <aws-ses.version>2.23.0</aws-ses.version>-->
         <aws-ses.version>1.12.656</aws-ses.version>
 
         <!-- Spring Boot versions -->
@@ -195,11 +195,11 @@
                 <artifactId>sqs</artifactId>
                 <version>${aws-sqs.version}</version>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>software.amazon.awssdk</groupId>-->
-<!--                <artifactId>ses</artifactId>-->
-<!--                <version>${aws-ses.version}</version>-->
-<!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>software.amazon.awssdk</groupId>-->
+            <!--                <artifactId>ses</artifactId>-->
+            <!--                <version>${aws-ses.version}</version>-->
+            <!--            </dependency>-->
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-ses</artifactId>

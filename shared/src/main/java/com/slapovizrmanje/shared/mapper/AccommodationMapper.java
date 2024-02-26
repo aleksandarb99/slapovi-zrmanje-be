@@ -32,7 +32,7 @@ public interface AccommodationMapper {
 
     var lodgingMap = item.get("lodging").m();
     Map<String, Integer> finalLodgingMap = new HashMap<>();
-    for (String key: lodgingMap.keySet()) {
+    for (String key : lodgingMap.keySet()) {
       finalLodgingMap.put(key, Integer.parseInt(lodgingMap.get(key).n()));
     }
 
@@ -64,7 +64,7 @@ public interface AccommodationMapper {
 
     Map<String, AttributeValue> lodgingMap = event.get("lodging").getM();
     Map<String, Integer> finalLodgingMap = new HashMap<>();
-    for (String key: lodgingMap.keySet()) {
+    for (String key : lodgingMap.keySet()) {
       finalLodgingMap.put(key, Integer.parseInt(lodgingMap.get(key).getN()));
     }
 

@@ -12,6 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExceptionMessageDTO {
-    private LocalDateTime timestamp;
-    private String message;
+  private LocalDateTime timestamp;
+  private String message;
 }

@@ -41,6 +41,7 @@ public class AccommodationDao {
 
     return executeQueryRequestAndMapItems(queryRequest);
   }
+
   public List<Accommodation> findByEmail(final String email) {
     final AttributeValue emailAttribute = AttributeValue.builder()
             .s(email)

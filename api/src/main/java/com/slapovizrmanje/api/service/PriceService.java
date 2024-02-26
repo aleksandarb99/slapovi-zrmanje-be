@@ -1,6 +1,7 @@
 package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.util.Prices;
+import com.slapovizrmanje.api.util.Validator;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.shared.dto.PriceItemDTO;
 import com.slapovizrmanje.shared.dto.PriceResponseDTO;
@@ -17,10 +18,10 @@ import static java.time.temporal.ChronoUnit.DAYS;
 @Service
 @RequiredArgsConstructor
 public class PriceService {
-
   public PriceResponseDTO checkPrice(AccommodationRequestDTO requestDTO) {
-//    TODO: Validiraj
-
+    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
+    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
+    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
 
     PriceResponseDTO responseDTO = PriceResponseDTO.builder()
             .priceItems(new ArrayList<>())
@@ -40,6 +41,7 @@ public class PriceService {
 
     return responseDTO;
   }
+
   private void calculatePriceForCamp(AccommodationRequestDTO accommodationRequestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
     double totalPrice = 0;
     int adults = accommodationRequestDTO.getGuests().getAdults();
