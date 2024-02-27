@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.config;
+package com.slapovizrmanje.shared.config;
 
 import com.slapovizrmanje.shared.model.Accommodation;
 import org.springframework.context.annotation.Bean;

@@ -29,6 +29,10 @@ import java.util.function.Function;
 public class FunctionsConfig {
 
   @Bean
+  public Function<Object, Object> sendReminder(final ReminderSenderComponent reminderSenderComponent) {
+    return reminderSenderComponent.sendReminder();
+  }
+  @Bean
   public Function<SQSEvent, SQSEvent> sendEmailNotification(final EmailNotificationSenderComponent emailNotificationSenderComponent) {
     return emailNotificationSenderComponent.sendEmailNotification();
   }
