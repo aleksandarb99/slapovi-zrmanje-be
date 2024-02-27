@@ -114,6 +114,7 @@ public class CdkStack extends Stack {
             .build();
     emailLambda.addEventSource(emailSqsEventSource);
     emailLambda.addToRolePolicy(getSesSendEmailStatement("AllowSendingEmail"));
+    apiFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
 
     // Dynamo Handler Lambda
     final String dynamoLambdaName = "dynamo-stream-trigger-lambda";

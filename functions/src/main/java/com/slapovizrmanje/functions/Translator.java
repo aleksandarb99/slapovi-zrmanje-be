@@ -177,7 +177,7 @@ public class Translator {
       case "tent" -> {
         return getTent();
       }
-      case "sleeping_bag" -> {
+      case "sleepingBag" -> {
         return getSleepingBag();
       }
       case "room1" -> {
