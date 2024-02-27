@@ -10,6 +10,10 @@ import software.amazon.awscdk.services.cloudwatch.Alarm;
 import software.amazon.awscdk.services.cloudwatch.ComparisonOperator;
 import software.amazon.awscdk.services.cloudwatch.actions.SnsAction;
 import software.amazon.awscdk.services.dynamodb.*;
+import software.amazon.awscdk.services.events.CronOptions;
+import software.amazon.awscdk.services.events.Rule;
+import software.amazon.awscdk.services.events.Schedule;
+import software.amazon.awscdk.services.events.targets.LambdaFunction;
 import software.amazon.awscdk.services.iam.Effect;
 import software.amazon.awscdk.services.iam.PolicyStatement;
 import software.amazon.awscdk.services.iam.PolicyStatementProps;
@@ -177,6 +181,41 @@ public class CdkStack extends Stack {
             .build();
 
     emailAlarm.addAlarmAction(new SnsAction(emailSnsTopic));
+
+
+    // Reminder
+    final SnapStartFunction reminderSenderFunction = new SnapStartFunction(this, "reminder-lambda",
+            FunctionProps.builder()
+                    .functionName("reminder-lambda")
+                    .runtime(Runtime.JAVA_17)
+                    .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./functions/target/functions.jar").toString()))
+                    .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
+                    .environment(Map.of(
+                            "SPRING_CLOUD_FUNCTION_DEFINITION", "sendReminder",
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                    ))
+                    .memorySize(512)
+                    .timeout(Duration.seconds(15))
+                    .build());
+    reminderSenderFunction.getFunction().addToRolePolicy(getDynamoReadStatement(accommodationTableArn, "AllowRequestTableRead"));
+    reminderSenderFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
+
+    reminderSenderFunction.getFunction().grantInvoke(new ServicePrincipal("events.amazonaws.com"));
+
+//    TODO: This is real cron expression
+
+//        final Schedule schedule = Schedule.cron(CronOptions.builder()
+//            .minute("0").hour("20").day("*").month("*").year("*").build());
+//    TODO: Ovde stavi vreme koje hoces da testiras; Ako hoces 20:50; Stavi prvi broj na 50 jer on oznacava minute,
+//     a drugi na 19, jer on gleda UTC pa treba minus 1
+    final Schedule schedule = Schedule.cron(CronOptions.builder()
+            .minute("20").hour("20").day("*").month("*").year("*").build());
+    final Rule reminderRule = Rule.Builder.create(this, "reminder-rule")
+            .ruleName("reminder-rule")
+            .enabled(true)
+            .schedule(schedule)
+            .targets(List.of(LambdaFunction.Builder.create(reminderSenderFunction.getFunction()).build()))
+            .build();
   }
 
   private String createAccommodationTable(Construct scope) {

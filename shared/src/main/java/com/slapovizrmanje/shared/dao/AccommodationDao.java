@@ -1,17 +1,18 @@
-package com.slapovizrmanje.api.dao;
+package com.slapovizrmanje.shared.dao;
 
-import com.slapovizrmanje.api.exception.DbErrorException;
+import com.slapovizrmanje.shared.exception.DbErrorException;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
+import com.slapovizrmanje.shared.model.enums.AccommodationState;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
-import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
-import software.amazon.awssdk.services.dynamodb.model.QueryResponse;
+import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +26,27 @@ public class AccommodationDao {
   private final String tableName = "accommodation";
   private final DynamoDbClient dynamoDbClient;
 
+  public List<Accommodation> findWhereStartDateIsTomorrowAndStateIsReserved() {
+    final AttributeValue stateAttributeValue = AttributeValue.builder()
+            .s(AccommodationState.RESERVED.toString())
+            .build();
+    final AttributeValue tomorrowAttributeValue = AttributeValue.builder()
+            .s(LocalDate.now().plus(1, ChronoUnit.DAYS).toString())
+            .build();
+
+    final var scanRequest = ScanRequest.builder()
+            .tableName(tableName)
+            .filterExpression("#state = :state and #startdate = :startdate")
+            .expressionAttributeNames(Map.of("#state", "state", "#startdate", "start_date"))
+            .expressionAttributeValues(Map.of(":state", stateAttributeValue, ":startdate", tomorrowAttributeValue))
+            .build();
+
+    final ScanResponse response = dynamoDbClient.scan(scanRequest);
+    return response.items()
+            .stream()
+            .map(accommodationMapper::toEntity)
+            .collect(Collectors.toList());
+  }
   public List<Accommodation> findByEmailAndIdPair(final String email, String id) {
     final AttributeValue emailAttribute = AttributeValue.builder()
             .s(email)

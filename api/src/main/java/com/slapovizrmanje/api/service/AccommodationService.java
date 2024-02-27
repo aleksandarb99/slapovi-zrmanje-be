@@ -1,6 +1,6 @@
 package com.slapovizrmanje.api.service;
 
-import com.slapovizrmanje.api.dao.AccommodationDao;
+import com.slapovizrmanje.shared.dao.AccommodationDao;
 import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.api.exception.NotFoundException;
 import com.slapovizrmanje.api.util.TimeProvider;
@@ -198,6 +198,7 @@ public class AccommodationService {
       throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
     }
 
+//    TODO: Test this
     if (!accommodation.getStartDate().minus(3, ChronoUnit.DAYS).isAfter(LocalDate.now())) {
       throw new BadRequestException(String.format("Entity with id '%s' has start date which is not in at least 3 days in future from now.", id));
     }

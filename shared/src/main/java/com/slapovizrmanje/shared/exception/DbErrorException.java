@@ -1,4 +1,4 @@
-package com.slapovizrmanje.api.exception;
+package com.slapovizrmanje.shared.exception;
 
 public class DbErrorException extends RuntimeException {
 

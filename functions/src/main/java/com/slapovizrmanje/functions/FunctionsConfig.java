@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +29,10 @@ import java.util.function.Function;
 @SpringBootApplication
 public class FunctionsConfig {
 
+  @Bean
+  public Function<Object, Object> sendReminder(final ReminderSenderComponent reminderSenderComponent) {
+    return reminderSenderComponent.sendReminder();
+  }
   @Bean
   public Function<SQSEvent, SQSEvent> sendEmailNotification(final EmailNotificationSenderComponent emailNotificationSenderComponent) {
     return emailNotificationSenderComponent.sendEmailNotification();
