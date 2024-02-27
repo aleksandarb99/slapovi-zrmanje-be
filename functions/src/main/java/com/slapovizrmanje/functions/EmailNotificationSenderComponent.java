@@ -3,12 +3,10 @@ package com.slapovizrmanje.functions;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.slapovizrmanje.shared.dto.AccommodationsDTO;
+import com.slapovizrmanje.shared.dto.ContactQuestionDTO;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.Guests;
-import com.slapovizrmanje.shared.model.enums.AccommodationState;
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import com.slapovizrmanje.shared.model.enums.Language;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @Slf4j
@@ -45,51 +44,59 @@ public class EmailNotificationSenderComponent {
   public Function<SQSEvent, SQSEvent> sendEmailNotification() {
     return emailNotificationsEvent -> {
       emailNotificationsEvent.getRecords().forEach(record -> {
-        Accommodation accommodation = null;
-        AccommodationsDTO accommodations = null;
+
+        String recordBody = record.getBody();
+        Map<String, SQSEvent.MessageAttribute> messageAttributeMap = record.getMessageAttributes();
+        SQSEvent.MessageAttribute classMessageAttribute = messageAttributeMap.get("class");
 
         try {
-           accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
-        } catch (final JsonProcessingException ignored) {
-        }
-        if (accommodation == null) {
-          try {
-            accommodations = objectMapper.readValue(record.getBody(), AccommodationsDTO.class);
-          } catch (JsonProcessingException ignored) {
-          }
-        }
-
-        if (accommodation == null && accommodations == null) {
-          throw new RuntimeException("Invalid object in queue");
-        }
-
-        try {
-          log.info(String.format("Received accommodation: %s", accommodation));
-          translator = chooseTranslator(accommodation.getLanguage());
-          if (accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
-            sendVerificationEmail(accommodation);
-          } else if (accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-            sendVerificationConfirmEmail(accommodation);
-            sendAccommodationRequestEmail(accommodation);
-          } else if (accommodation.getState().equals(AccommodationState.NOT_AVAILABLE)) {
-            sendRejectedAccommodationRequestEmail(accommodation);
-          } else if (accommodation.getState().equals(AccommodationState.AVAILABLE)) {
-            sendAcceptedAccommodationRequestEmail(accommodation);
-          } else if (accommodation.getState().equals(AccommodationState.RESERVED)) {
-            sendReservedConfirmEmail(accommodation);
-            sendReservedAccommodationRequestEmail(accommodation);
-          } else if (accommodation.getState().equals(AccommodationState.CANCELED)) {
-            sendCanceledConfirmEmail(accommodation);
-            sendCanceledAccommodationReservationEmail(accommodation);
-          } else {
-            log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
+          switch (classMessageAttribute.getStringValue()) {
+            case "Accommodation" -> processAccommodationSqsEvent(recordBody);
+            case "ContactQuestionDTO" -> processContactQuestionSqsEvent(recordBody);
+            default -> log.info("Message attribute 'class' not setup!");
           }
         } catch (final IOException e) {
           log.error(String.format("Error sending email notification...Error message: %s", e.getMessage()));
         }
+
       });
       return emailNotificationsEvent;
     };
+  }
+
+  private void processContactQuestionSqsEvent(String recordBody) throws IOException {
+    final ContactQuestionDTO contactQuestion = objectMapper.readValue(recordBody, ContactQuestionDTO.class);
+    log.info(String.format("Received contact question: %s", contactQuestion));
+    translator = chooseTranslator(Language.HR);
+    final String template = readTemplate("get-in-touch-email-template.html");
+    final String emailBody = String.format(template, contactQuestion.getName(), contactQuestion.getEmail(), contactQuestion.getMessage());
+
+    sendEmail(SOURCE_EMAIL, contactQuestion.getEmail(), emailBody);
+  }
+
+  private void processAccommodationSqsEvent(String recordBody) throws IOException {
+    final Accommodation accommodation = objectMapper.readValue(recordBody, Accommodation.class);
+    log.info(String.format("Received accommodation: %s", accommodation));
+    translator = chooseTranslator(accommodation.getLanguage());
+
+    switch (accommodation.getState()) {
+      case EMAIL_NOT_VERIFIED -> sendVerificationEmail(accommodation);
+      case EMAIL_VERIFIED -> {
+        sendVerificationConfirmEmail(accommodation);
+        sendAccommodationRequestEmail(accommodation);
+      }
+      case NOT_AVAILABLE -> sendRejectedAccommodationRequestEmail(accommodation);
+      case AVAILABLE -> sendAcceptedAccommodationRequestEmail(accommodation);
+      case RESERVED -> {
+        sendReservedConfirmEmail(accommodation);
+        sendReservedAccommodationRequestEmail(accommodation);
+      }
+      case CANCELED -> {
+        sendCanceledConfirmEmail(accommodation);
+        sendCanceledAccommodationReservationEmail(accommodation);
+      }
+      default -> log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
+    }
   }
 
   private void sendVerificationEmail(final Accommodation accommodation) throws IOException {
@@ -99,7 +106,7 @@ public class EmailNotificationSenderComponent {
     final String verificationLink = String.format("%s/verify?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
     final String emailBody = String.format(template, verificationHeader, translator.getHello(), accommodationSummary, verificationLink, translator.getVerifyButton(), translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private void sendVerificationConfirmEmail(final Accommodation accommodation) throws IOException {
@@ -108,7 +115,7 @@ public class EmailNotificationSenderComponent {
     final String verificationConfirmText = generateVerificationConfirmText(accommodation);
     final String emailBody = String.format(template, verificationConfirmHeader, translator.getHello(), verificationConfirmText, translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private void sendAccommodationRequestEmail(final Accommodation accommodation) throws IOException {
@@ -120,7 +127,7 @@ public class EmailNotificationSenderComponent {
     final String acceptanceLink = String.format("%s/accept?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
     final String emailBody = String.format(template, accommodationType, accommodationSummary, rejectionLink, acceptanceLink);
 
-    sendEmail(SOURCE_EMAIL2, emailBody);
+    sendEmail(SOURCE_EMAIL2, null, emailBody);
   }
 
   private void sendRejectedAccommodationRequestEmail(Accommodation accommodation) throws IOException {
@@ -129,7 +136,7 @@ public class EmailNotificationSenderComponent {
     final String rejectionConfirmText = generateRejectionConfirmText(accommodation);
     final String emailBody = String.format(template, rejectionHeader, translator.getHello(), rejectionConfirmText, translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private void sendAcceptedAccommodationRequestEmail(Accommodation accommodation) throws IOException {
@@ -139,7 +146,7 @@ public class EmailNotificationSenderComponent {
     final String reservationLink = String.format("%s/reserve?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
     final String emailBody = String.format(template, reservationHeader, translator.getReserveHello(), accommodationSummary, reservationLink, translator.getReserveButton(), translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private void sendReservedAccommodationRequestEmail(Accommodation accommodation) throws IOException {
@@ -149,7 +156,7 @@ public class EmailNotificationSenderComponent {
     final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
     final String emailBody = String.format(template, verificationConfirmHeader, "Zdravo Ziko, pregled rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
 
-    sendEmail(SOURCE_EMAIL2, emailBody);
+    sendEmail(SOURCE_EMAIL2, null, emailBody);
   }
 
   private void sendReservedConfirmEmail(Accommodation accommodation) throws IOException {
@@ -159,7 +166,7 @@ public class EmailNotificationSenderComponent {
     final String cancellationLink = String.format("%s/cancel?email=%s&id=%s&code=%s", url, accommodation.getEmail(), accommodation.getId(), accommodation.getCode());
     final String emailBody = String.format(template, reservationConfirmHeader, translator.getHello(), reservationConfirmText, cancellationLink, translator.getCancelButton(), translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private void sendCanceledAccommodationReservationEmail(Accommodation accommodation) throws IOException {
@@ -169,7 +176,7 @@ public class EmailNotificationSenderComponent {
     final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
     final String emailBody = String.format(template, cancellationConfirmHeader, "Zdravo Ziko, pregled otkazane rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
 
-    sendEmail(SOURCE_EMAIL2, emailBody);
+    sendEmail(SOURCE_EMAIL2, null, emailBody);
   }
 
   private void sendCanceledConfirmEmail(Accommodation accommodation) throws IOException {
@@ -178,7 +185,7 @@ public class EmailNotificationSenderComponent {
     final String cancellationConfirmText = generateCancellationConfirmText(accommodation);
     final String emailBody = String.format(template, cancellationConfirmHeader, translator.getHello(), cancellationConfirmText, translator.getBye());
 
-    sendEmail(accommodation.getEmail(), emailBody);
+    sendEmail(accommodation.getEmail(), null, emailBody);
   }
 
   private String generateAccommodationSummaryText(final Accommodation accommodation) {
@@ -238,7 +245,7 @@ public class EmailNotificationSenderComponent {
     return String.format(translator.getReserveConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());
   }
 
-  private void sendEmail(String destinationEmailAddress, String emailBody) {
+  private void sendEmail(String destinationEmailAddress, String replyToEmailAddress, String emailBody) {
     Body bodyContent = new Body().withHtml(new Content().withCharset(UTF_8).withData(emailBody));
     Message message = new Message()
             .withBody(bodyContent)
@@ -250,6 +257,9 @@ public class EmailNotificationSenderComponent {
               .withSource(SOURCE_EMAIL)
               .withDestination(destination)
               .withMessage(message);
+      if (replyToEmailAddress != null) {
+        request.setReplyToAddresses(List.of(replyToEmailAddress));
+      }
       log.info("Sending an email via SES.");
       sesClient.sendEmail(request);
       log.info("Email has been sent.");

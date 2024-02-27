@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.mapper.AccommodationMapperImpl;
+import com.slapovizrmanje.shared.service.AwsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -50,13 +51,6 @@ public class FunctionsConfig {
   }
 
   @Bean
-  public SqsClient sqsClient() {
-    return SqsClient.builder()
-            .region(Region.EU_CENTRAL_1)
-            .build();
-  }
-
-  @Bean
   public AmazonSimpleEmailService sesClient() {
     return AmazonSimpleEmailServiceClientBuilder.standard()
             .withRegion(Regions.EU_CENTRAL_1)
@@ -64,7 +58,8 @@ public class FunctionsConfig {
   }
 
   public static void main(final String[] args) {
-    testEmailLambda();
+//    testEmailLambda();
+    testContactEmailLambda();
 //        testDynamoLambda();
   }
 
@@ -95,6 +90,38 @@ public class FunctionsConfig {
 //                "\"lodging\": {\"room1\": 1, \"room2\": 1, \"room3\": 0}, " +
 //                "\"lodging\": {\"car\": 1, \"caravan\": 0, \"tent\": 1, \"sleepingBag\": 2}, " +
             "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}");
+    SQSEvent.MessageAttribute classAttribute = new SQSEvent.MessageAttribute();
+    classAttribute.setStringValue("Accommodation");
+    classAttribute.setDataType("String");
+    sqsMessage.setMessageAttributes(Map.of("class", classAttribute));
+
+    // Create SQSEvent
+    SQSEvent sqsEvent = new SQSEvent();
+    sqsEvent.setRecords(List.of(sqsMessage));
+
+    emailLambda.apply(sqsEvent);
+  }
+
+  // When needed similar can be added for DynamoStream Lambda
+  private static void testContactEmailLambda() {
+    AmazonSimpleEmailService sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
+            .withRegion(Regions.EU_CENTRAL_1)
+            .build();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, objectMapper);
+    Function<SQSEvent, SQSEvent> emailLambda = emailNotificationSenderComponent.sendEmailNotification();
+
+    // Create SQSMessage
+    SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
+    sqsMessage.setMessageId("1");
+    sqsMessage.setBody("{\"email\": \"petrovic.ma9@gmail.com\", " +
+            "\"name\": \"Marija Petrovic\", " +
+            "\"message\": \"Kad imate dostupne smestaje, da vas ne smaram sa rezervacijama, vidim da nije moguce videti dostupnost?\"}");
+    SQSEvent.MessageAttribute classAttribute = new SQSEvent.MessageAttribute();
+    classAttribute.setStringValue("ContactQuestionDTO");
+    classAttribute.setDataType("String");
+    sqsMessage.setMessageAttributes(Map.of("class", classAttribute));
 
     // Create SQSEvent
     SQSEvent sqsEvent = new SQSEvent();
@@ -109,7 +136,9 @@ public class FunctionsConfig {
     SqsClient sqsClient = SqsClient.builder()
             .region(Region.EU_CENTRAL_1)
             .build();
-    DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(sqsClient, new ObjectMapper(), accommodationMapper);
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    DynamoStreamTriggerComponent dynamoStreamTriggerComponent = new DynamoStreamTriggerComponent(new AwsService(sqsClient), objectMapper, accommodationMapper);
     Function<DynamodbEvent, DynamodbEvent> dynamoLambda = dynamoStreamTriggerComponent.handleDynamoStreamEvent();
 
     // Create Guests
@@ -137,6 +166,10 @@ public class FunctionsConfig {
     finalMap.put("created_at", new AttributeValue().withN("1707691825368"));
     finalMap.put("start_date", new AttributeValue().withS("2024-03-19"));
     finalMap.put("end_date", new AttributeValue().withS("2024-03-20"));
+    finalMap.put("code", new AttributeValue().withS("testCode"));
+    finalMap.put("state", new AttributeValue().withS("EMAIL_NOT_VERIFIED"));
+    finalMap.put("type", new AttributeValue().withS("CAMP"));
+    finalMap.put("language", new AttributeValue().withS("EN"));
     finalMap.put("guests", new AttributeValue().withM(guestsMap));
     finalMap.put("lodging", new AttributeValue().withM(lodgingMap));
     StreamRecord streamRecord = new StreamRecord();

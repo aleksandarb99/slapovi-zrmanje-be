@@ -118,6 +118,7 @@ public class CdkStack extends Stack {
             .build();
     emailLambda.addEventSource(emailSqsEventSource);
     emailLambda.addToRolePolicy(getSesSendEmailStatement("AllowSendingEmail"));
+    apiFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
 
     // Dynamo Handler Lambda
     final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
@@ -208,7 +209,7 @@ public class CdkStack extends Stack {
 //    TODO: Ovde stavi vreme koje hoces da testiras; Ako hoces 20:50; Stavi prvi broj na 50 jer on oznacava minute,
 //     a drugi na 19, jer on gleda UTC pa treba minus 1
     final Schedule schedule = Schedule.cron(CronOptions.builder()
-            .minute("25").hour("19").day("*").month("*").year("*").build());
+            .minute("20").hour("20").day("*").month("*").year("*").build());
     final Rule reminderRule = Rule.Builder.create(this, "reminder-rule")
             .ruleName("reminder-rule")
             .enabled(true)
