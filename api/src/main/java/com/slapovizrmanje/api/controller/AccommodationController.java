@@ -1,8 +1,10 @@
 package com.slapovizrmanje.api.controller;
 
 import com.slapovizrmanje.api.service.AccommodationService;
+import com.slapovizrmanje.api.service.ContactService;
 import com.slapovizrmanje.api.service.PriceService;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
+import com.slapovizrmanje.shared.dto.ContactQuestionDTO;
 import com.slapovizrmanje.shared.dto.PriceResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class AccommodationController {
 
   private final AccommodationService accommodationService;
   private final PriceService priceService;
+  private final ContactService contactService;
 
   @GetMapping("/cancel")
   public void cancel(@RequestParam String email, @RequestParam String id, @RequestParam String code) {
@@ -63,4 +66,10 @@ public class AccommodationController {
     return priceService.checkPrice(accommodationRequestDTO);
   }
 
+  @PostMapping("/get-in-touch")
+  public ResponseEntity<Void> getInTouch(@Valid @RequestBody ContactQuestionDTO contactQuestionDTO) {
+    log.info("CONTACT SERVICE - Get in touch.");
+    contactService.getInTouch(contactQuestionDTO);
+    return ResponseEntity.ok().build();
+  }
 }
