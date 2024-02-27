@@ -5,6 +5,7 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.slapovizrmanje.shared.dto.AccommodationsDTO;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.Guests;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
@@ -19,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.function.Function;
 
 @Slf4j
@@ -43,8 +45,25 @@ public class EmailNotificationSenderComponent {
   public Function<SQSEvent, SQSEvent> sendEmailNotification() {
     return emailNotificationsEvent -> {
       emailNotificationsEvent.getRecords().forEach(record -> {
+        Accommodation accommodation = null;
+        AccommodationsDTO accommodations = null;
+
         try {
-          final Accommodation accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
+           accommodation = objectMapper.readValue(record.getBody(), Accommodation.class);
+        } catch (final JsonProcessingException ignored) {
+        }
+        if (accommodation == null) {
+          try {
+            accommodations = objectMapper.readValue(record.getBody(), AccommodationsDTO.class);
+          } catch (JsonProcessingException ignored) {
+          }
+        }
+
+        if (accommodation == null && accommodations == null) {
+          throw new RuntimeException("Invalid object in queue");
+        }
+
+        try {
           log.info(String.format("Received accommodation: %s", accommodation));
           translator = chooseTranslator(accommodation.getLanguage());
           if (accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
@@ -65,8 +84,6 @@ public class EmailNotificationSenderComponent {
           } else {
             log.info(String.format("Email type - %s not handled yet!", accommodation.getType()));
           }
-        } catch (final JsonProcessingException e) {
-          log.error("Unexpected accommodation type", e);
         } catch (final IOException e) {
           log.error(String.format("Error sending email notification...Error message: %s", e.getMessage()));
         }

@@ -2,6 +2,7 @@ package com.slapovizrmanje.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.slapovizrmanje.shared.dao.AccommodationDao;
+import com.slapovizrmanje.shared.dto.AccommodationsDTO;
 import com.slapovizrmanje.shared.model.Accommodation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,13 +28,15 @@ public class ReminderSenderComponent {
       log.info("ACCOMMODATION DAO - Fetching entity where start date is tomorrow and state is reserved.");
       List<Accommodation> accommodationList = accommodationDao.findWhereStartDateIsTomorrowAndStateIsReserved();
 
-      sendMessageToQueue(accommodationList);
+      sendMessageToQueue(AccommodationsDTO.builder()
+              .accommodations(accommodationList)
+              .build());
       log.info("Reminding owner of accommodation request which will start date is tomorrow.");
       return scheduledEvent;
     };
   }
 
-  private void sendMessageToQueue(final List<Accommodation> accommodations) {
+  private void sendMessageToQueue(final AccommodationsDTO accommodations) {
     String queueUrl = getQueueUrl();
     try {
       String message = objectMapper.writeValueAsString(accommodations);
