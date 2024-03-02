@@ -72,13 +72,13 @@ public class CdkStack extends Stack {
             .build();
 
     // Email Handler Lambda
-    generateEmailHandlerLambda(apiFunction, emailQueue, emailSqsEventSource);
+    generateEmailHandlerLambda(apiFunction, emailQueue, emailSqsEventSource, frontendUrl);
 
     // Stream Event Dead Letter Queue Service (DlSQS)
-    DynamoEventSource dynamoEventSource = createDynamoEventSoruce();
+    DynamoEventSource dynamoEventSource = createDynamoEventSoruce(frontendUrl);
 
     // Dynamo Handler Lambda
-    generateDynamoHandlerLambda(emailQueue, dynamoEventSource);
+    generateDynamoHandlerLambda(emailQueue, dynamoEventSource, frontendUrl);
 
     // Create an Email SNS topic
     Topic emailSnsTopic = createSnsTopic();
@@ -87,10 +87,10 @@ public class CdkStack extends Stack {
     createEmailAlarm(emailDlQueue, emailSnsTopic);
 
     // Reminder
-    generateReminderLambda(accommodationTableArn, emailQueue);
+    generateReminderLambda(accommodationTableArn, emailQueue, frontendUrl);
 
     // ProposeDate
-    generateProposeDateLambda(accommodationTableArn, emailQueue);
+    generateProposeDateLambda(accommodationTableArn, emailQueue, frontendUrl);
   }
 
   @NotNull
@@ -160,7 +160,7 @@ public class CdkStack extends Stack {
             .build();
   }
 
-  private void generateEmailHandlerLambda(SnapStartFunction apiFunction, Queue emailQueue, SqsEventSource emailSqsEventSource) {
+  private void generateEmailHandlerLambda(SnapStartFunction apiFunction, Queue emailQueue, SqsEventSource emailSqsEventSource, String frontendUrl) {
     String emailLambdaName = "email-lambda";
     Function emailLambda = new Function(this, emailLambdaName,
             FunctionProps.builder()
@@ -170,7 +170,8 @@ public class CdkStack extends Stack {
                     .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
                     .environment(Map.of(
                             "SPRING_CLOUD_FUNCTION_DEFINITION", "sendEmailNotification",
-                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig",
+                            "FRONTEND_URL", frontendUrl
                     ))
                     .memorySize(512)
                     .timeout(Duration.seconds(15))
@@ -181,7 +182,7 @@ public class CdkStack extends Stack {
     apiFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
   }
 
-  private void generateDynamoHandlerLambda(Queue emailQueue, DynamoEventSource dynamoEventSource) {
+  private void generateDynamoHandlerLambda(Queue emailQueue, DynamoEventSource dynamoEventSource, String frontendUrl) {
     String dynamoLambdaName = "dynamo-stream-trigger-lambda";
     Function dynamoTriggerLambda = new Function(this, dynamoLambdaName,
             FunctionProps.builder()
@@ -191,7 +192,8 @@ public class CdkStack extends Stack {
                     .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
                     .environment(Map.of(
                             "SPRING_CLOUD_FUNCTION_DEFINITION", "handleDynamoStreamEvent",
-                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig",
+                            "FRONTEND_URL", frontendUrl
                     ))
                     .memorySize(512)
                     .timeout(Duration.seconds(15))
@@ -203,7 +205,7 @@ public class CdkStack extends Stack {
   }
 
   @NotNull
-  private DynamoEventSource createDynamoEventSoruce() {
+  private DynamoEventSource createDynamoEventSoruce(String frontendUrl) {
     String streamEventDlQueueName = "stream-event-dl-queue";
     Queue streamEventQueue = Queue.Builder
             .create(this, streamEventDlQueueName)
@@ -250,7 +252,7 @@ public class CdkStack extends Stack {
     emailAlarm.addAlarmAction(new SnsAction(emailSnsTopic));
   }
 
-  private void generateReminderLambda(String accommodationTableArn, Queue emailQueue) {
+  private void generateReminderLambda(String accommodationTableArn, Queue emailQueue, String frontendUrl) {
     SnapStartFunction reminderSenderFunction = new SnapStartFunction(this, "reminder-lambda",
             FunctionProps.builder()
                     .functionName("reminder-lambda")
@@ -259,7 +261,8 @@ public class CdkStack extends Stack {
                     .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
                     .environment(Map.of(
                             "SPRING_CLOUD_FUNCTION_DEFINITION", "sendReminder",
-                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig",
+                            "FRONTEND_URL", frontendUrl
                     ))
                     .memorySize(512)
                     .timeout(Duration.seconds(15))
@@ -279,7 +282,7 @@ public class CdkStack extends Stack {
             .build();
   }
 
-  private void generateProposeDateLambda(String accommodationTableArn, Queue emailQueue) {
+  private void generateProposeDateLambda(String accommodationTableArn, Queue emailQueue, String frontendUrl) {
     SnapStartFunction proposeDateFunction = new SnapStartFunction(this, "propose-date-lambda",
             FunctionProps.builder()
                     .functionName("propose-date-lambda")
@@ -288,7 +291,8 @@ public class CdkStack extends Stack {
                     .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
                     .environment(Map.of(
                             "SPRING_CLOUD_FUNCTION_DEFINITION", "proposeDate",
-                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig",
+                            "FRONTEND_URL", frontendUrl
                     ))
                     .memorySize(512)
                     .timeout(Duration.seconds(15))

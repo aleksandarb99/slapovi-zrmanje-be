@@ -84,6 +84,7 @@ public interface AccommodationMapper {
             .state(AccommodationState.valueOf(event.get("state").getS()))
             .language(Language.valueOf(event.get("language").getS()))
             .type(AccommodationType.valueOf(event.get("type").getS()))
+            .lastModified(LocalDate.parse(event.get("last_modified").getS()))
             .build();
   }
 }
