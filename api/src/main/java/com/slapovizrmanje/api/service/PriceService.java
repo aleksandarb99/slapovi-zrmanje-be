@@ -130,7 +130,7 @@ public class PriceService {
     }
     int sleepingBag = accommodationRequestDTO.getLodging().get("sleepingBag");
     if (sleepingBag != 0) {
-      double price = Prices.speepingBagPrice * numberOfNights * sleepingBag;
+      double price = Prices.sleepingBagPrice * numberOfNights * sleepingBag;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
               .name("SleepingBag")
               .price(price)

@@ -8,10 +8,10 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 @Configuration
 public class AwsConfig {
 
-    @Bean
-    public SqsClient sqsClient() {
-        return SqsClient.builder()
-                .region(Region.EU_CENTRAL_1)
-                .build();
-    }
+  @Bean
+  public SqsClient sqsClient() {
+    return SqsClient.builder()
+            .region(Region.EU_CENTRAL_1)
+            .build();
+  }
 }

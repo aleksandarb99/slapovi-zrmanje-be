@@ -42,11 +42,14 @@ public class AccommodationDao {
             .build();
 
     final ScanResponse response = dynamoDbClient.scan(scanRequest);
+
+    log.info("ACCOMMODATION MAPPER - Mapping to entities.");
     return response.items()
             .stream()
             .map(accommodationMapper::toEntity)
             .collect(Collectors.toList());
   }
+
   public List<Accommodation> findWhereStartDateIsTomorrowAndStateIsReserved() {
     final AttributeValue stateAttributeValue = AttributeValue.builder()
             .s(AccommodationState.RESERVED.toString())
@@ -63,11 +66,14 @@ public class AccommodationDao {
             .build();
 
     final ScanResponse response = dynamoDbClient.scan(scanRequest);
+
+    log.info("ACCOMMODATION MAPPER - Mapping to entities.");
     return response.items()
             .stream()
             .map(accommodationMapper::toEntity)
             .collect(Collectors.toList());
   }
+
   public List<Accommodation> findByEmailAndIdPair(final String email, String id) {
     final AttributeValue emailAttribute = AttributeValue.builder()
             .s(email)
@@ -82,6 +88,7 @@ public class AccommodationDao {
             .expressionAttributeValues(Map.of(":id", idAttribute, ":email", emailAttribute))
             .build();
 
+    log.info("ACCOMMODATION MAPPER - Mapping to entities.");
     return executeQueryRequestAndMapItems(queryRequest);
   }
 
@@ -96,6 +103,7 @@ public class AccommodationDao {
             .expressionAttributeValues(Map.of(":email", emailAttribute))
             .build();
 
+    log.info("ACCOMMODATION MAPPER - Mapping to entities.");
     return executeQueryRequestAndMapItems(queryRequest);
   }
 

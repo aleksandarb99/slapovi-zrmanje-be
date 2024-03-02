@@ -196,11 +196,11 @@
                 <scope>import</scope>
             </dependency>
 
-<!--            <dependency>-->
-<!--                <groupId>software.amazon.awssdk</groupId>-->
-<!--                <artifactId>sqs</artifactId>-->
-<!--                <version>${aws-sqs.version}</version>-->
-<!--            </dependency>-->
+            <!--            <dependency>-->
+            <!--                <groupId>software.amazon.awssdk</groupId>-->
+            <!--                <artifactId>sqs</artifactId>-->
+            <!--                <version>${aws-sqs.version}</version>-->
+            <!--            </dependency>-->
             <!--            <dependency>-->
             <!--                <groupId>software.amazon.awssdk</groupId>-->
             <!--                <artifactId>ses</artifactId>-->

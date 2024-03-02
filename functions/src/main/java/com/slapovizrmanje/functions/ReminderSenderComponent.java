@@ -22,7 +22,6 @@ public class ReminderSenderComponent {
   private AccommodationDao accommodationDao;
   private final ObjectMapper objectMapper;
   private final AwsService awsService;
-
   public Function<Object, Object> sendReminder() {
     return scheduledEvent -> {
       log.info("ACCOMMODATION DAO - Fetching entity where start date is tomorrow and state is reserved.");

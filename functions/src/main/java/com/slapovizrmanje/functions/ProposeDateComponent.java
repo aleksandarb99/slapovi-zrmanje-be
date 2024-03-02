@@ -22,12 +22,15 @@ public class ProposeDateComponent {
   private AccommodationDao accommodationDao;
   private final ObjectMapper objectMapper;
   private final AwsService awsService;
-
-//  TODO: Do something here
   public Function<Object, Object> proposeDate() {
     return scheduledEvent -> {
       log.info("ACCOMMODATION DAO - Fetching entity where last modified is today and state is not available.");
       List<Accommodation> accommodationList = accommodationDao.findWhereLastModifiedIsTodayAndStateIsNotAvailable();
+      if (accommodationList.isEmpty()) {
+        log.info("There are no rejected entities in the database.");
+        return scheduledEvent;
+      }
+
       AccommodationsDTO accommodationsDTO = AccommodationsDTO.builder()
               .type(ScheduledEmailType.PROPOSE_DATE)
               .accommodations(accommodationList)
@@ -39,7 +42,6 @@ public class ProposeDateComponent {
       } catch (JsonProcessingException e) {
         throw new RuntimeException("Error occurred while converting Accommodation to String.");
       }
-
       awsService.sendMessageToQueue(message, accommodationsDTO.getClass().getSimpleName());
       log.info("Propose date for accommodation requests which are rejected today.");
       return scheduledEvent;

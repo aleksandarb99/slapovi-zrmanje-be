@@ -38,7 +38,7 @@ public class CdkStack extends Stack {
 
   private Table accommodationTable = null;
 
-  public CdkStack(final Construct scope, final StackProps props) {
+  public CdkStack(Construct scope, StackProps props, String frontendUrl) {
     super(scope, "slapovi-zrmanje-be", props);
 
 //    TODO: Da li da stavimo TTL na entitete
@@ -46,28 +46,28 @@ public class CdkStack extends Stack {
     String accommodationTableArn = createAccommodationTable(this);
 
     // API Lambda
-    final SnapStartFunction apiFunction = generateApiLambda(accommodationTableArn);
+    SnapStartFunction apiFunction = generateApiLambda(accommodationTableArn, frontendUrl);
 
     // Proxy config
-    final ProxyResourceOptions proxyR = generateProxyConfiguration(apiFunction);
+    ProxyResourceOptions proxyR = generateProxyConfiguration(apiFunction);
 
-//        final RestApiProps restApiProps = RestApiProps.builder()
+//        RestApiProps restApiProps = RestApiProps.builder()
 //                .deployOptions(StageOptions.builder().stageName(stage).build())
 //                .build();
 
     // Rest Api
-    final RestApi restApi = generateRestApi(proxyR);
+    RestApi restApi = generateRestApi(proxyR);
 
     // Email Dead Letter Queue
-    final Queue emailDlQueue = generateEmailDeadLetterQueue("email-notifications-dl-queue");
+    Queue emailDlQueue = generateEmailDeadLetterQueue("email-notifications-dl-queue");
 
     // Configure dead-letter queue settings
-    final DeadLetterQueue deadLetterQueueConfiguration = configureDeadLetterQueue(emailDlQueue);
+    DeadLetterQueue deadLetterQueueConfiguration = configureDeadLetterQueue(emailDlQueue);
 
     // Email Simple Queue Service (SQS)
-    final Queue emailQueue = generateEmailQueue(deadLetterQueueConfiguration, "email-notifications-sqs-queue");
+    Queue emailQueue = generateEmailQueue(deadLetterQueueConfiguration, "email-notifications-sqs-queue");
 
-    final SqsEventSource emailSqsEventSource = SqsEventSource.Builder
+    SqsEventSource emailSqsEventSource = SqsEventSource.Builder
             .create(emailQueue)
             .build();
 
@@ -95,20 +95,23 @@ public class CdkStack extends Stack {
 
   @NotNull
   private static ProxyResourceOptions generateProxyConfiguration(SnapStartFunction apiFunction) {
-    final LambdaIntegration integration = new LambdaIntegration(apiFunction.getAlias());
+    LambdaIntegration integration = new LambdaIntegration(apiFunction.getAlias());
     return ProxyResourceOptions.builder()
             .anyMethod(true)
             .defaultIntegration(integration)
             .build();
   }
 
-  private SnapStartFunction generateApiLambda(String accommodationTableArn) {
-    final SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-lambda",
+  private SnapStartFunction generateApiLambda(String accommodationTableArn, String frontendUrl) {
+    SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-lambda",
             FunctionProps.builder()
                     .functionName("slapovi-zrmanje-lambda")
                     .runtime(Runtime.JAVA_17)
                     .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./api/target/api.jar").toString()))
                     .handler("com.slapovizrmanje.api.StreamLambdaHandler")
+                    .environment(Map.of(
+                            "FRONTEND_URL", frontendUrl
+                    ))
                     .memorySize(2048)
                     .timeout(Duration.seconds(30))
                     .build());
@@ -129,7 +132,7 @@ public class CdkStack extends Stack {
 
   @NotNull
   private Queue generateEmailDeadLetterQueue(String emailDlQueueName) {
-    final Queue emailDlQueue = Queue.Builder
+    Queue emailDlQueue = Queue.Builder
             .create(this, emailDlQueueName)
             .queueName(emailDlQueueName)
             .retentionPeriod(Duration.days(14))
@@ -139,7 +142,7 @@ public class CdkStack extends Stack {
 
   @NotNull
   private static DeadLetterQueue configureDeadLetterQueue(Queue emailDlQueue) {
-    final DeadLetterQueue deadLetterQueueConfiguration = DeadLetterQueue.builder()
+    DeadLetterQueue deadLetterQueueConfiguration = DeadLetterQueue.builder()
             .queue(emailDlQueue)
             // TODO increase if needed
             .maxReceiveCount(1) // Maximum number of receives before moving to email dead letter queue
@@ -158,8 +161,7 @@ public class CdkStack extends Stack {
   }
 
   private void generateEmailHandlerLambda(SnapStartFunction apiFunction, Queue emailQueue, SqsEventSource emailSqsEventSource) {
-    final String emailLambdaName = "email-lambda";
-    // TODO make it snapstart
+    String emailLambdaName = "email-lambda";
     Function emailLambda = new Function(this, emailLambdaName,
             FunctionProps.builder()
                     .functionName(emailLambdaName)
@@ -180,8 +182,7 @@ public class CdkStack extends Stack {
   }
 
   private void generateDynamoHandlerLambda(Queue emailQueue, DynamoEventSource dynamoEventSource) {
-    final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
-    // TODO make it snapstart
+    String dynamoLambdaName = "dynamo-stream-trigger-lambda";
     Function dynamoTriggerLambda = new Function(this, dynamoLambdaName,
             FunctionProps.builder()
                     .functionName(dynamoLambdaName)
@@ -203,15 +204,15 @@ public class CdkStack extends Stack {
 
   @NotNull
   private DynamoEventSource createDynamoEventSoruce() {
-    final String streamEventDlQueueName = "stream-event-dl-queue";
-    final Queue streamEventQueue = Queue.Builder
+    String streamEventDlQueueName = "stream-event-dl-queue";
+    Queue streamEventQueue = Queue.Builder
             .create(this, streamEventDlQueueName)
             .queueName(streamEventDlQueueName)
             .retentionPeriod(Duration.days(14))
             .build();
     SqsDlq streamEventDlQueue = new SqsDlq(streamEventQueue);
 
-    final DynamoEventSource dynamoEventSource = DynamoEventSource.Builder
+    DynamoEventSource dynamoEventSource = DynamoEventSource.Builder
             .create(accommodationTable)
             .batchSize(1)
             .startingPosition(StartingPosition.LATEST)
@@ -250,7 +251,7 @@ public class CdkStack extends Stack {
   }
 
   private void generateReminderLambda(String accommodationTableArn, Queue emailQueue) {
-    final SnapStartFunction reminderSenderFunction = new SnapStartFunction(this, "reminder-lambda",
+    SnapStartFunction reminderSenderFunction = new SnapStartFunction(this, "reminder-lambda",
             FunctionProps.builder()
                     .functionName("reminder-lambda")
                     .runtime(Runtime.JAVA_17)
@@ -268,9 +269,9 @@ public class CdkStack extends Stack {
 
     reminderSenderFunction.getFunction().grantInvoke(new ServicePrincipal("events.amazonaws.com"));
 
-    final Schedule reminderSchedule = Schedule.cron(CronOptions.builder()
+    Schedule reminderSchedule = Schedule.cron(CronOptions.builder()
             .minute("0").hour("20").day("*").month("*").year("*").build());
-    final Rule reminderRule = Rule.Builder.create(this, "reminder-rule")
+    Rule reminderRule = Rule.Builder.create(this, "reminder-rule")
             .ruleName("reminder-rule")
             .enabled(false)
             .schedule(reminderSchedule)
@@ -279,7 +280,7 @@ public class CdkStack extends Stack {
   }
 
   private void generateProposeDateLambda(String accommodationTableArn, Queue emailQueue) {
-    final SnapStartFunction proposeDateFunction = new SnapStartFunction(this, "propose-date-lambda",
+    SnapStartFunction proposeDateFunction = new SnapStartFunction(this, "propose-date-lambda",
             FunctionProps.builder()
                     .functionName("propose-date-lambda")
                     .runtime(Runtime.JAVA_17)
@@ -297,9 +298,9 @@ public class CdkStack extends Stack {
 
     proposeDateFunction.getFunction().grantInvoke(new ServicePrincipal("events.amazonaws.com"));
 
-    final Schedule proposeDateSchedule = Schedule.cron(CronOptions.builder()
+    Schedule proposeDateSchedule = Schedule.cron(CronOptions.builder()
             .minute("30").hour("20").day("*").month("*").year("*").build());
-    final Rule proposeDateRule = Rule.Builder.create(this, "propose-date-rule")
+    Rule proposeDateRule = Rule.Builder.create(this, "propose-date-rule")
             .ruleName("propose-date-rule")
             .enabled(false)
             .schedule(proposeDateSchedule)
@@ -308,11 +309,11 @@ public class CdkStack extends Stack {
   }
 
   private String createAccommodationTable(Construct scope) {
-    final Attribute email = Attribute.builder()
+    Attribute email = Attribute.builder()
             .name("email")
             .type(AttributeType.STRING)
             .build();
-    final Attribute id = Attribute.builder()
+    Attribute id = Attribute.builder()
             .name("id")
             .type(AttributeType.STRING)
             .build();
@@ -326,7 +327,7 @@ public class CdkStack extends Stack {
     return accommodationTable.getTableArn();
   }
 
-  private PolicyStatement getDynamoReadStatement(final String tableArn, final String sid) {
+  private PolicyStatement getDynamoReadStatement(String tableArn, String sid) {
     return new PolicyStatement(PolicyStatementProps.builder()
             .sid(sid)
             .effect(Effect.ALLOW)
@@ -335,7 +336,7 @@ public class CdkStack extends Stack {
             .build());
   }
 
-  private PolicyStatement getDynamoWriteStatement(final String tableArn, final String sid) {
+  private PolicyStatement getDynamoWriteStatement(String tableArn, String sid) {
     return new PolicyStatement(PolicyStatementProps.builder()
             .sid(sid)
             .effect(Effect.ALLOW)
@@ -353,7 +354,7 @@ public class CdkStack extends Stack {
             .build());
   }
 
-  private PolicyStatement getDynamoStreamsStatement(final String streamArn, final String sid) {
+  private PolicyStatement getDynamoStreamsStatement(String streamArn, String sid) {
     return new PolicyStatement(PolicyStatementProps.builder()
             .sid(sid)
             .effect(Effect.ALLOW)
@@ -362,7 +363,7 @@ public class CdkStack extends Stack {
             .build());
   }
 
-  private static PolicyStatement getSqsGetSendStatement(final String queueArn, final String sid) {
+  private static PolicyStatement getSqsGetSendStatement(String queueArn, String sid) {
     return new PolicyStatement(PolicyStatementProps.builder()
             .sid(sid)
             .effect(Effect.ALLOW)

@@ -1,10 +1,10 @@
 package com.slapovizrmanje.api.service;
 
-import com.slapovizrmanje.shared.dao.AccommodationDao;
 import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.api.exception.NotFoundException;
 import com.slapovizrmanje.api.util.TimeProvider;
 import com.slapovizrmanje.api.util.Validator;
+import com.slapovizrmanje.shared.dao.AccommodationDao;
 import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
@@ -74,17 +74,17 @@ public class AccommodationService {
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
     }
 
     accommodation.setState(AccommodationState.EMAIL_VERIFIED);
@@ -102,17 +102,17 @@ public class AccommodationService {
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
     }
 
     accommodation.setState(AccommodationState.NOT_AVAILABLE);
@@ -130,17 +130,17 @@ public class AccommodationService {
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+      throw new NotFoundException(String.format("Entity with id the '%s' does not exist.", id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
     }
 
     accommodation.setState(AccommodationState.AVAILABLE);
@@ -158,21 +158,21 @@ public class AccommodationService {
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.AVAILABLE)) {
-      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
     }
 
     if (!accommodation.getStartDate().isAfter(LocalDate.now())) {
-      throw new BadRequestException(String.format("Entity with id '%s' has start date which is not in the future.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has start date which is not in the future.", id));
     }
 
     accommodation.setState(AccommodationState.RESERVED);
@@ -190,22 +190,21 @@ public class AccommodationService {
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id '%s' does not exist.", id));
+      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
-      throw new BadRequestException(String.format("Entity with id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with id '%s' has different code.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
     }
 
-//    TODO: Test this
     if (!accommodation.getStartDate().minus(3, ChronoUnit.DAYS).isAfter(LocalDate.now())) {
-      throw new BadRequestException(String.format("Entity with id '%s' has start date which is not in at least 3 days in future from now.", id));
+      throw new BadRequestException(String.format("Entity with the id '%s' has a start date that is less than 3 days in the future from now.", id));
     }
 
     accommodation.setState(AccommodationState.CANCELED);

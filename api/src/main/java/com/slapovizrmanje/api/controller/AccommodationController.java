@@ -10,7 +10,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -54,10 +53,10 @@ public class AccommodationController {
   }
 
   @PostMapping("/check-availability")
-  public ResponseEntity<Void> checkAvailability(@Valid @RequestBody AccommodationRequestDTO accommodationRequestDTO) {
+  @ResponseStatus(HttpStatus.CREATED)
+  public void checkAvailability(@Valid @RequestBody AccommodationRequestDTO accommodationRequestDTO) {
     log.info("ACCOMMODATION SERVICE - Check availability.");
     accommodationService.checkAvailability(accommodationRequestDTO);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
   }
 
   @PostMapping("/check-price")
@@ -67,9 +66,8 @@ public class AccommodationController {
   }
 
   @PostMapping("/get-in-touch")
-  public ResponseEntity<Void> getInTouch(@Valid @RequestBody ContactQuestionDTO contactQuestionDTO) {
+  public void getInTouch(@Valid @RequestBody ContactQuestionDTO contactQuestionDTO) {
     log.info("CONTACT SERVICE - Get in touch.");
     contactService.getInTouch(contactQuestionDTO);
-    return ResponseEntity.ok().build();
   }
 }

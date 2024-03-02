@@ -1,27 +1,21 @@
 package com.slapovizrmanje.api.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@RequiredArgsConstructor
 public class CorsConfig implements WebMvcConfigurer {
 
-//  TODO: Ovde treba samo front vrv
-
-  @Autowired
-  CorsInterceptor corsInterceptor;
+  @Value("${frontend.url}")
+  private String frontendUrl;
 
   @Override
   public void addCorsMappings(final CorsRegistry registry) {
-    registry.addMapping("/**").allowedMethods("*");
+    registry.addMapping("/**").allowedMethods("*").allowedOrigins(frontendUrl);
   }
 
-  @Override
-  public void addInterceptors(final InterceptorRegistry registry) {
-    registry.addInterceptor(corsInterceptor);
-    WebMvcConfigurer.super.addInterceptors(registry);
-  }
 }

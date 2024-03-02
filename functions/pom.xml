@@ -12,7 +12,7 @@
     <properties>
         <spring-boot-maven-plugin-shading.version>2.7.4</spring-boot-maven-plugin-shading.version>
         <spring-boot.version>3.1.0</spring-boot.version>
-        <commons.version>0.0.1-SNAPSHOT</commons.version>
+        <shared.version>0.0.1-SNAPSHOT</shared.version>
         <spring-cloud.version>2022.0.3</spring-cloud.version>
         <java-jwt.version>4.4.0</java-jwt.version>
         <jwks-rsa.version>0.22.0</jwks-rsa.version>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>com.slapovizrmanje</groupId>
             <artifactId>shared</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${shared.version}</version>
         </dependency>
         <!-- Third party libraries -->
         <dependency>
