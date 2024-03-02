@@ -38,6 +38,7 @@ public class Accommodation {
   @EqualsAndHashCode.Include
   private LocalDate endDate;
   private long createdAt;
+  private LocalDate lastModified;
 
   @DynamoDbPartitionKey()
   public String getEmail() {
@@ -101,6 +102,11 @@ public class Accommodation {
 
   @DynamoDbAttribute("end_date")
   public LocalDate getEndDate() {
+    return endDate;
+  }
+
+  @DynamoDbAttribute("last_modified")
+  public LocalDate getLastModified() {
     return endDate;
   }
 

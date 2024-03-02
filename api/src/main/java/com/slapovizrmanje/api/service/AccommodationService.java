@@ -37,6 +37,7 @@ public class AccommodationService {
     accommodation.setCreatedAt(System.currentTimeMillis());
     accommodation.setState(AccommodationState.EMAIL_NOT_VERIFIED);
     accommodation.setCode(UUID.randomUUID().toString());
+    accommodation.setLastModified(LocalDate.now());
 
     log.info("ACCOMMODATION DAO - Fetching by email.");
     List<Accommodation> foundEntities = accommodationDao.findByEmail(accommodation.getEmail());
@@ -88,6 +89,7 @@ public class AccommodationService {
 
     accommodation.setState(AccommodationState.EMAIL_VERIFIED);
     accommodation.setCode(UUID.randomUUID().toString());
+    accommodation.setLastModified(LocalDate.now());
 
     log.info(String.format("ACCOMMODATION DAO - Verify accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
@@ -115,6 +117,7 @@ public class AccommodationService {
 
     accommodation.setState(AccommodationState.NOT_AVAILABLE);
     accommodation.setCode(UUID.randomUUID().toString());
+    accommodation.setLastModified(LocalDate.now());
 
     log.info(String.format("ACCOMMODATION DAO - Reject accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
@@ -142,6 +145,7 @@ public class AccommodationService {
 
     accommodation.setState(AccommodationState.AVAILABLE);
     accommodation.setCode(UUID.randomUUID().toString());
+    accommodation.setLastModified(LocalDate.now());
 
     log.info(String.format("ACCOMMODATION DAO - Accept accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
@@ -173,6 +177,7 @@ public class AccommodationService {
 
     accommodation.setState(AccommodationState.RESERVED);
     accommodation.setCode(UUID.randomUUID().toString());
+    accommodation.setLastModified(LocalDate.now());
 
     log.info(String.format("ACCOMMODATION DAO - Reserved accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
@@ -204,6 +209,7 @@ public class AccommodationService {
     }
 
     accommodation.setState(AccommodationState.CANCELED);
+    accommodation.setLastModified(LocalDate.now());
 
     log.info(String.format("ACCOMMODATION DAO - Canceled accommodation: %s.", accommodation));
     accommodationDao.update(accommodation);
