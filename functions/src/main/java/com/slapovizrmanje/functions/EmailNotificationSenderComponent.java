@@ -4,11 +4,13 @@ import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.slapovizrmanje.shared.dto.AccommodationsDTO;
 import com.slapovizrmanje.shared.dto.ContactQuestionDTO;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.Guests;
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import com.slapovizrmanje.shared.model.enums.Language;
+import com.slapovizrmanje.shared.model.enums.ScheduledEmailType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +39,7 @@ public class EmailNotificationSenderComponent {
   private static final String LI_TEMPLATE = "<li>%s: %d</li>";
   private static final String UTF_8 = "UTF-8";
   // TODO: Ovde ce biti s sajta naseg, tj domena
-  private static final String SOURCE_EMAIL = "abuljevic8@gmail.com";
+  private static final String SOURCE_EMAIL = "jovansimic995@gmail.com";
 
   public Function<SQSEvent, SQSEvent> sendEmailNotification() {
     return emailNotificationsEvent -> {
@@ -50,6 +52,7 @@ public class EmailNotificationSenderComponent {
           switch (classMessageAttribute.getStringValue()) {
             case "Accommodation" -> processAccommodationSqsEvent(recordBody);
             case "ContactQuestionDTO" -> processContactQuestionSqsEvent(recordBody);
+            case "AccommodationsDTO" -> processAccommodationListSqsEvent(recordBody);
             default -> log.info("Message attribute 'class' not setup!");
           }
         } catch (final IOException e) {
@@ -59,6 +62,20 @@ public class EmailNotificationSenderComponent {
       });
       return emailNotificationsEvent;
     };
+  }
+
+  private void processAccommodationListSqsEvent(String recordBody) throws IOException {
+    final AccommodationsDTO accommodations = objectMapper.readValue(recordBody, AccommodationsDTO.class);
+    translator = chooseTranslator(Language.HR);
+    final String summaryText = generateSummaryText(accommodations);
+    final String header = accommodations.getType().equals(ScheduledEmailType.PROPOSE_DATE) ?
+            "Prikaz zahteva koji su danas odbijeni je dat u nastavku" :
+            "Pregled rezervacija koje mozete sutra ocekivati";
+    final String template = readTemplate("no-buttons-email-template.html");
+    final String emailBody = String.format(template, header, "Pozdrav", summaryText, "Do sutra u isto vreme");
+
+    // TODO Change source email
+    sendEmail(SOURCE_EMAIL, SOURCE_EMAIL, emailBody);
   }
 
   private void processContactQuestionSqsEvent(String recordBody) throws IOException {
@@ -151,7 +168,7 @@ public class EmailNotificationSenderComponent {
     final String template = readTemplate("no-buttons-email-template.html");
     final String verificationConfirmHeader = String.format("Rezervacija za %s je prihvacena", translator.getAccommodation(accommodation.getType()));
     final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
-    final String emailBody = String.format(template, verificationConfirmHeader, "Zdravo Ziko, pregled rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
+    final String emailBody = String.format(template, verificationConfirmHeader, "Zdravo, pregled rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
 
     sendEmail(SOURCE_EMAIL, null, emailBody);
   }
@@ -171,7 +188,7 @@ public class EmailNotificationSenderComponent {
     final String template = readTemplate("no-buttons-email-template.html");
     final String cancellationConfirmHeader = String.format("Rezervacija za %s je otkazana", translator.getAccommodation(accommodation.getType()));
     final String accommodationSummaryText = generateAccommodationSummaryText(accommodation);
-    final String emailBody = String.format(template, cancellationConfirmHeader, "Zdravo Ziko, pregled otkazane rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
+    final String emailBody = String.format(template, cancellationConfirmHeader, "Zdravo, pregled otkazane rezervacije je dat u nastavku", accommodationSummaryText, translator.getBye());
 
     sendEmail(SOURCE_EMAIL, null, emailBody);
   }
@@ -225,6 +242,56 @@ public class EmailNotificationSenderComponent {
             powerSupply
     );
   }
+
+  private String generateSummaryText(final AccommodationsDTO accommodations) {
+    int requestCounter = 1;
+    StringBuilder proposeSummaryBuilder = new StringBuilder();
+    String starter = accommodations.getType().equals(ScheduledEmailType.PROPOSE_DATE) ? "Zahtev" : "Rezervacija";
+    for (Accommodation accommodation: accommodations.getAccommodations()) {
+      proposeSummaryBuilder.append(String.format("<br/><b>%s %d<br/>", starter, requestCounter));
+      proposeSummaryBuilder.append("_".repeat(60));
+      proposeSummaryBuilder.append("</b><br/>");
+      Guests guests = accommodation.getGuests();
+      String guestsString = translator.getGuests() + ":" +
+              (guests.getAdults() > 0 ? String.format(" %s - %d;", translator.getAdults(), guests.getAdults()) : "") +
+              (guests.getChildren() > 0 ? String.format(" %s - %d;", translator.getChildren(), guests.getChildren()) : "") +
+              (guests.getInfants() > 0 ? String.format(" %s - %d;", translator.getInfants(), guests.getInfants()) : "") +
+              (guests.getPets() > 0 ? String.format(" %s - %d;", translator.getPets(), guests.getPets()) : "");
+      guestsString = guestsString.substring(0, guestsString.length() - 1);
+      StringBuilder lodgingBuilder = new StringBuilder(translator.getLodging());
+      lodgingBuilder.append(":");
+      accommodation.getLodging().forEach((key, value) -> {
+        if (value > 0) {
+          lodgingBuilder.append(String.format(" %s - %d;", translator.getLodgingType(key), value));
+        }
+      });
+      String lodgingString = lodgingBuilder.substring(0, lodgingBuilder.length() - 1);
+      String infoTemplate = "Naziv: %s %s<br>" +    // First and Last Name
+              "Email: %s<br>" +                     // Email
+              "Datum: %s - %s<br>" +                // Check-In
+              "%s<br/>" +                           // Guests
+              "%s<br/>" +                           // Lodging
+              "%s";                                 // Power supply (In case of CAMP Accommodation)
+      String powerSupply = accommodation.getType().equals(AccommodationType.CAMP) ?
+              String.format("%s: %s<br/>", translator.getPowerSupply(), accommodation.isPowerSupply() ? translator.getYes() : translator.getNo()) :
+              "";
+      String accommodationSummary = String.format(infoTemplate,
+              accommodation.getFirstName(),
+              accommodation.getLastName(),
+              accommodation.getEmail(),
+              formatter.format(accommodation.getStartDate()),
+              formatter.format(accommodation.getEndDate()),
+              guestsString,
+              lodgingString,
+              powerSupply
+      );
+      proposeSummaryBuilder.append(accommodationSummary);
+      requestCounter++;
+    }
+
+    return proposeSummaryBuilder.toString();
+  }
+
 
   private String generateVerificationConfirmText(final Accommodation accommodation) {
     return String.format(translator.getVerifyConfirmParagraph(), translator.getAccommodation(accommodation.getType()), accommodation.getId());

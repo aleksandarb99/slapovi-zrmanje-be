@@ -22,6 +22,7 @@ public class ProposeDateComponent {
   private AccommodationDao accommodationDao;
   private final ObjectMapper objectMapper;
   private final AwsService awsService;
+
   public Function<Object, Object> proposeDate() {
     return scheduledEvent -> {
       log.info("ACCOMMODATION DAO - Fetching entity where last modified is today and state is not available.");
