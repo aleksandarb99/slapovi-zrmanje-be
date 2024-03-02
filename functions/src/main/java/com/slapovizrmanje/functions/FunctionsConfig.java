@@ -58,8 +58,9 @@ public class FunctionsConfig {
   }
   public static void main(final String[] args) {
 //    testEmailLambda();
-    testContactEmailLambda();
-//        testDynamoLambda();
+//    testContactEmailLambda();
+      testScheduledEmailLambda();
+//    testDynamoLambda();
   }
 
   // When needed similar can be added for DynamoStream Lambda
@@ -78,7 +79,7 @@ public class FunctionsConfig {
     sqsMessage.setBody("{\"email\": \"jovansimic995@gmail.com\", " +
             "\"type\": \"APARTMENT\", " +
             "\"state\": \"EMAIL_NOT_VERIFIED\", " +
-            "\"language\": \"EN\", " +
+            "\"language\": \"DE\", " +
             "\"firstName\": \"Jovan\", " +
             "\"lastName\": \"Simic\", " +
             "\"startDate\": \"2024-02-16\", " +
@@ -119,6 +120,80 @@ public class FunctionsConfig {
             "\"message\": \"Kad imate dostupne smestaje, da vas ne smaram sa rezervacijama, vidim da nije moguce videti dostupnost?\"}");
     SQSEvent.MessageAttribute classAttribute = new SQSEvent.MessageAttribute();
     classAttribute.setStringValue("ContactQuestionDTO");
+    classAttribute.setDataType("String");
+    sqsMessage.setMessageAttributes(Map.of("class", classAttribute));
+
+    // Create SQSEvent
+    SQSEvent sqsEvent = new SQSEvent();
+    sqsEvent.setRecords(List.of(sqsMessage));
+
+    emailLambda.apply(sqsEvent);
+  }
+
+  private static void testScheduledEmailLambda() {
+    AmazonSimpleEmailService sesClient = AmazonSimpleEmailServiceClientBuilder.standard()
+            .withRegion(Regions.EU_CENTRAL_1)
+            .build();
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JavaTimeModule());
+    EmailNotificationSenderComponent emailNotificationSenderComponent = new EmailNotificationSenderComponent(sesClient, objectMapper);
+    Function<SQSEvent, SQSEvent> emailLambda = emailNotificationSenderComponent.sendEmailNotification();
+
+    // Create SQSMessage
+    SQSEvent.SQSMessage sqsMessage = new SQSEvent.SQSMessage();
+    sqsMessage.setMessageId("1");
+    sqsMessage.setBody("{\"type\": \"REMINDER\", \"accommodations\": [" +
+            "{\"email\": \"jovansimic995@gmail.com\", " +
+            "\"type\": \"APARTMENT\", " +
+            "\"state\": \"NOT_AVAILABLE\", " +
+            "\"language\": \"EN\", " +
+            "\"firstName\": \"Jovan\", " +
+            "\"lastName\": \"Simic\", " +
+            "\"startDate\": \"2024-02-16\", " +
+            "\"endDate\": \"2024-02-17\", " +
+            "\"powerSupply\": true, " +
+            "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+            "\"lodging\": {\"apartment1\": 0, \"apartment2\": 0, \"apartment3\": 1}, " +
+            "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}," +
+            "{\"email\": \"abuljevic8@gmail.com\", " +
+            "\"type\": \"CAMP\", " +
+            "\"state\": \"NOT_AVAILABLE\", " +
+            "\"language\": \"EN\", " +
+            "\"firstName\": \"Aleksandar\", " +
+            "\"lastName\": \"Buljevic\", " +
+            "\"startDate\": \"2024-02-16\", " +
+            "\"endDate\": \"2024-02-17\", " +
+            "\"powerSupply\": true, " +
+            "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+            "\"lodging\": {\"car\": 1, \"caravan\": 1, \"sleepingBag\": 1}, " +
+            "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}," +
+            "{\"email\": \"petrovic.ma9@gmail.com\", " +
+            "\"type\": \"APARTMENT\", " +
+            "\"state\": \"NOT_AVAILABLE\", " +
+            "\"language\": \"EN\", " +
+            "\"firstName\": \"Marija\", " +
+            "\"lastName\": \"Petrovic\", " +
+            "\"startDate\": \"2024-02-16\", " +
+            "\"endDate\": \"2024-02-17\", " +
+            "\"powerSupply\": true, " +
+            "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+            "\"lodging\": {\"apartment1\": 1, \"apartment2\": 0, \"apartment3\": 0}, " +
+            "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}," +
+            "{\"email\": \"ivana.korpak00@gmail.com\", " +
+            "\"type\": \"APARTMENT\", " +
+            "\"state\": \"NOT_AVAILABLE\", " +
+            "\"language\": \"EN\", " +
+            "\"firstName\": \"Ivana\", " +
+            "\"lastName\": \"Korpak\", " +
+            "\"startDate\": \"2024-02-16\", " +
+            "\"endDate\": \"2024-02-17\", " +
+            "\"powerSupply\": true, " +
+            "\"guests\": {\"adults\": 2, \"children\": 1, \"infants\": 0, \"pets\": 1}, " +
+            "\"lodging\": {\"apartment1\": 0, \"apartment2\": 1, \"apartment3\": 0}, " +
+            "\"id\": \"shbds-sads-dgddd-sda-asdsd\"}" +
+            "]}");
+    SQSEvent.MessageAttribute classAttribute = new SQSEvent.MessageAttribute();
+    classAttribute.setStringValue("AccommodationsDTO");
     classAttribute.setDataType("String");
     sqsMessage.setMessageAttributes(Map.of("class", classAttribute));
 
