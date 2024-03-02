@@ -30,6 +30,10 @@ import java.util.function.Function;
 public class FunctionsConfig {
 
   @Bean
+  public Function<Object, Object> proposeDate(final ProposeDateComponent proposeDateComponent) {
+    return proposeDateComponent.proposeDate();
+  }
+  @Bean
   public Function<Object, Object> sendReminder(final ReminderSenderComponent reminderSenderComponent) {
     return reminderSenderComponent.sendReminder();
   }

@@ -1,5 +1,6 @@
 package com.slapovizrmanje.cdk;
 
+import org.jetbrains.annotations.NotNull;
 import software.amazon.awscdk.Duration;
 import software.amazon.awscdk.Stack;
 import software.amazon.awscdk.StackProps;
@@ -40,10 +41,68 @@ public class CdkStack extends Stack {
   public CdkStack(final Construct scope, final StackProps props) {
     super(scope, "slapovi-zrmanje-be", props);
 
+//    TODO: Da li da stavimo TTL na entitete
     // Create tables
     String accommodationTableArn = createAccommodationTable(this);
 
-    // API Gateway and Lambda
+    // API Lambda
+    final SnapStartFunction apiFunction = generateApiLambda(accommodationTableArn);
+
+    // Proxy config
+    final ProxyResourceOptions proxyR = generateProxyConfiguration(apiFunction);
+
+//        final RestApiProps restApiProps = RestApiProps.builder()
+//                .deployOptions(StageOptions.builder().stageName(stage).build())
+//                .build();
+
+    // Rest Api
+    final RestApi restApi = generateRestApi(proxyR);
+
+    // Email Dead Letter Queue
+    final Queue emailDlQueue = generateEmailDeadLetterQueue("email-notifications-dl-queue");
+
+    // Configure dead-letter queue settings
+    final DeadLetterQueue deadLetterQueueConfiguration = configureDeadLetterQueue(emailDlQueue);
+
+    // Email Simple Queue Service (SQS)
+    final Queue emailQueue = generateEmailQueue(deadLetterQueueConfiguration, "email-notifications-sqs-queue");
+
+    final SqsEventSource emailSqsEventSource = SqsEventSource.Builder
+            .create(emailQueue)
+            .build();
+
+    // Email Handler Lambda
+    generateEmailHandlerLambda(apiFunction, emailQueue, emailSqsEventSource);
+
+    // Stream Event Dead Letter Queue Service (DlSQS)
+    DynamoEventSource dynamoEventSource = createDynamoEventSoruce();
+
+    // Dynamo Handler Lambda
+    generateDynamoHandlerLambda(emailQueue, dynamoEventSource);
+
+    // Create an Email SNS topic
+    Topic emailSnsTopic = createSnsTopic();
+
+    // Create Email Alarm based on messages visible in Email DLQ
+    createEmailAlarm(emailDlQueue, emailSnsTopic);
+
+    // Reminder
+    generateReminderLambda(accommodationTableArn, emailQueue);
+
+    // ProposeDate
+    generateProposeDateLambda(accommodationTableArn, emailQueue);
+  }
+
+  @NotNull
+  private static ProxyResourceOptions generateProxyConfiguration(SnapStartFunction apiFunction) {
+    final LambdaIntegration integration = new LambdaIntegration(apiFunction.getAlias());
+    return ProxyResourceOptions.builder()
+            .anyMethod(true)
+            .defaultIntegration(integration)
+            .build();
+  }
+
+  private SnapStartFunction generateApiLambda(String accommodationTableArn) {
     final SnapStartFunction apiFunction = new SnapStartFunction(this, "slapovi-zrmanje-lambda",
             FunctionProps.builder()
                     .functionName("slapovi-zrmanje-lambda")
@@ -58,45 +117,47 @@ public class CdkStack extends Stack {
 
     apiFunction.getAlias().grantInvoke(new ServicePrincipal("apigateway.amazonaws.com"));
 
-    final LambdaIntegration integration = new LambdaIntegration(apiFunction.getAlias());
+    return apiFunction;
+  }
 
-    final ProxyResourceOptions proxyR = ProxyResourceOptions.builder()
-            .anyMethod(true)
-            .defaultIntegration(integration)
-            .build();
-
-//        final RestApiProps restApiProps = RestApiProps.builder()
-//                .deployOptions(StageOptions.builder().stageName(stage).build())
-//                .build();
-    final RestApi restApi = new RestApi(this, "slapovi-zrmanje-rest-api");
-
+  @NotNull
+  private RestApi generateRestApi(ProxyResourceOptions proxyR) {
+    RestApi restApi = new RestApi(this, "slapovi-zrmanje-rest-api");
     restApi.getRoot().addProxy(proxyR);
+    return restApi;
+  }
 
-    // Email Dead Letter Queue
-    final String emailDlQueueName = "email-notifications-dl-queue";
+  @NotNull
+  private Queue generateEmailDeadLetterQueue(String emailDlQueueName) {
     final Queue emailDlQueue = Queue.Builder
             .create(this, emailDlQueueName)
             .queueName(emailDlQueueName)
             .retentionPeriod(Duration.days(14))
             .build();
+    return emailDlQueue;
+  }
 
-    // Configure dead-letter queue settings
+  @NotNull
+  private static DeadLetterQueue configureDeadLetterQueue(Queue emailDlQueue) {
     final DeadLetterQueue deadLetterQueueConfiguration = DeadLetterQueue.builder()
             .queue(emailDlQueue)
             // TODO increase if needed
             .maxReceiveCount(1) // Maximum number of receives before moving to email dead letter queue
             .build();
+    return deadLetterQueueConfiguration;
+  }
 
-    // Email Simple Queue Service (SQS)
-    final String emailQueueName = "email-notifications-sqs-queue";
-    final Queue emailQueue = Queue.Builder
+  @NotNull
+  private Queue generateEmailQueue(DeadLetterQueue deadLetterQueueConfiguration, String emailQueueName) {
+    return Queue.Builder
             .create(this, emailQueueName)
             .queueName(emailQueueName)
             .deadLetterQueue(deadLetterQueueConfiguration)
             .visibilityTimeout(Duration.seconds(30))
             .build();
+  }
 
-    // Email Handler Lambda
+  private void generateEmailHandlerLambda(SnapStartFunction apiFunction, Queue emailQueue, SqsEventSource emailSqsEventSource) {
     final String emailLambdaName = "email-lambda";
     // TODO make it snapstart
     Function emailLambda = new Function(this, emailLambdaName,
@@ -113,14 +174,12 @@ public class CdkStack extends Stack {
                     .timeout(Duration.seconds(15))
                     .build());
 
-    final SqsEventSource emailSqsEventSource = SqsEventSource.Builder
-            .create(emailQueue)
-            .build();
     emailLambda.addEventSource(emailSqsEventSource);
     emailLambda.addToRolePolicy(getSesSendEmailStatement("AllowSendingEmail"));
     apiFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
+  }
 
-    // Dynamo Handler Lambda
+  private void generateDynamoHandlerLambda(Queue emailQueue, DynamoEventSource dynamoEventSource) {
     final String dynamoLambdaName = "dynamo-stream-trigger-lambda";
     // TODO make it snapstart
     Function dynamoTriggerLambda = new Function(this, dynamoLambdaName,
@@ -137,7 +196,13 @@ public class CdkStack extends Stack {
                     .timeout(Duration.seconds(15))
                     .build());
 
-    // Stream Event Dead Letter Queue Service (DlSQS)
+    dynamoTriggerLambda.addEventSource(dynamoEventSource);
+    dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(accommodationTable.getTableStreamArn(), "AllowDynamoStreams"));
+    dynamoTriggerLambda.addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
+  }
+
+  @NotNull
+  private DynamoEventSource createDynamoEventSoruce() {
     final String streamEventDlQueueName = "stream-event-dl-queue";
     final Queue streamEventQueue = Queue.Builder
             .create(this, streamEventDlQueueName)
@@ -153,12 +218,11 @@ public class CdkStack extends Stack {
             .onFailure(streamEventDlQueue)
             .retryAttempts(1)
             .build();
+    return dynamoEventSource;
+  }
 
-    dynamoTriggerLambda.addEventSource(dynamoEventSource);
-    dynamoTriggerLambda.addToRolePolicy(getDynamoStreamsStatement(accommodationTable.getTableStreamArn(), "AllowDynamoStreams"));
-    dynamoTriggerLambda.addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
-
-    // Create an Email SNS topic
+  @NotNull
+  private Topic createSnsTopic() {
     Topic emailSnsTopic = Topic.Builder.create(this, "EmailSnsTopic")
             .displayName("Email SNS Topic")
             .topicName("email-sns-topic")
@@ -167,8 +231,10 @@ public class CdkStack extends Stack {
     // Create email subscriptions for devs/ supports
     EmailSubscription emailSubscription = EmailSubscription.Builder.create("jovansimic995@gmail.com").build();
     emailSnsTopic.addSubscription(emailSubscription);
+    return emailSnsTopic;
+  }
 
-    // Create Email Alarm based on messages visible in Email DLQ
+  private void createEmailAlarm(Queue emailDlQueue, Topic emailSnsTopic) {
     Alarm emailAlarm = Alarm.Builder
             .create(this, "EmailAlarm")
             .alarmName("Email Dead Letter Queue Alarm")
@@ -181,9 +247,9 @@ public class CdkStack extends Stack {
             .build();
 
     emailAlarm.addAlarmAction(new SnsAction(emailSnsTopic));
+  }
 
-
-    // Reminder
+  private void generateReminderLambda(String accommodationTableArn, Queue emailQueue) {
     final SnapStartFunction reminderSenderFunction = new SnapStartFunction(this, "reminder-lambda",
             FunctionProps.builder()
                     .functionName("reminder-lambda")
@@ -202,19 +268,42 @@ public class CdkStack extends Stack {
 
     reminderSenderFunction.getFunction().grantInvoke(new ServicePrincipal("events.amazonaws.com"));
 
-//    TODO: This is real cron expression
-
-//        final Schedule schedule = Schedule.cron(CronOptions.builder()
-//            .minute("0").hour("20").day("*").month("*").year("*").build());
-//    TODO: Ovde stavi vreme koje hoces da testiras; Ako hoces 20:50; Stavi prvi broj na 50 jer on oznacava minute,
-//     a drugi na 19, jer on gleda UTC pa treba minus 1
-    final Schedule schedule = Schedule.cron(CronOptions.builder()
-            .minute("20").hour("20").day("*").month("*").year("*").build());
+    final Schedule reminderSchedule = Schedule.cron(CronOptions.builder()
+            .minute("0").hour("20").day("*").month("*").year("*").build());
     final Rule reminderRule = Rule.Builder.create(this, "reminder-rule")
             .ruleName("reminder-rule")
-            .enabled(true)
-            .schedule(schedule)
+            .enabled(false)
+            .schedule(reminderSchedule)
             .targets(List.of(LambdaFunction.Builder.create(reminderSenderFunction.getFunction()).build()))
+            .build();
+  }
+
+  private void generateProposeDateLambda(String accommodationTableArn, Queue emailQueue) {
+    final SnapStartFunction proposeDateFunction = new SnapStartFunction(this, "propose-date-lambda",
+            FunctionProps.builder()
+                    .functionName("propose-date-lambda")
+                    .runtime(Runtime.JAVA_17)
+                    .code(Code.fromAsset(new File(new File(System.getProperty("user.dir")), "./functions/target/functions.jar").toString()))
+                    .handler("org.springframework.cloud.function.adapter.aws.FunctionInvoker::handleRequest")
+                    .environment(Map.of(
+                            "SPRING_CLOUD_FUNCTION_DEFINITION", "proposeDate",
+                            "MAIN_CLASS", "com.slapovizrmanje.functions.FunctionsConfig"
+                    ))
+                    .memorySize(512)
+                    .timeout(Duration.seconds(15))
+                    .build());
+    proposeDateFunction.getFunction().addToRolePolicy(getDynamoReadStatement(accommodationTableArn, "AllowRequestTableRead"));
+    proposeDateFunction.getFunction().addToRolePolicy(getSqsGetSendStatement(emailQueue.getQueueArn(), "AllowSqsQueueGetSend"));
+
+    proposeDateFunction.getFunction().grantInvoke(new ServicePrincipal("events.amazonaws.com"));
+
+    final Schedule proposeDateSchedule = Schedule.cron(CronOptions.builder()
+            .minute("30").hour("20").day("*").month("*").year("*").build());
+    final Rule proposeDateRule = Rule.Builder.create(this, "propose-date-rule")
+            .ruleName("propose-date-rule")
+            .enabled(false)
+            .schedule(proposeDateSchedule)
+            .targets(List.of(LambdaFunction.Builder.create(proposeDateFunction.getFunction()).build()))
             .build();
   }
 

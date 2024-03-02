@@ -26,6 +26,27 @@ public class AccommodationDao {
   private final String tableName = "accommodation";
   private final DynamoDbClient dynamoDbClient;
 
+  public List<Accommodation> findWhereLastModifiedIsTodayAndStateIsNotAvailable() {
+    final AttributeValue stateAttributeValue = AttributeValue.builder()
+            .s(AccommodationState.NOT_AVAILABLE.toString())
+            .build();
+    final AttributeValue todayAttributeValue = AttributeValue.builder()
+            .s(LocalDate.now().toString())
+            .build();
+
+    final var scanRequest = ScanRequest.builder()
+            .tableName(tableName)
+            .filterExpression("#state = :state and #last_modified = :last_modified")
+            .expressionAttributeNames(Map.of("#state", "state", "#last_modified", "last_modified"))
+            .expressionAttributeValues(Map.of(":state", stateAttributeValue, ":last_modified", todayAttributeValue))
+            .build();
+
+    final ScanResponse response = dynamoDbClient.scan(scanRequest);
+    return response.items()
+            .stream()
+            .map(accommodationMapper::toEntity)
+            .collect(Collectors.toList());
+  }
   public List<Accommodation> findWhereStartDateIsTomorrowAndStateIsReserved() {
     final AttributeValue stateAttributeValue = AttributeValue.builder()
             .s(AccommodationState.RESERVED.toString())
@@ -105,4 +126,5 @@ public class AccommodationDao {
             .map(accommodationMapper::toEntity)
             .collect(Collectors.toList());
   }
+
 }

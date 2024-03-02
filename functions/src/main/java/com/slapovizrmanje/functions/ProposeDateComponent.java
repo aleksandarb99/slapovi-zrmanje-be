@@ -17,18 +17,19 @@ import java.util.function.Function;
 @AllArgsConstructor
 @Component
 @Slf4j
-public class ReminderSenderComponent {
+public class ProposeDateComponent {
 
   private AccommodationDao accommodationDao;
   private final ObjectMapper objectMapper;
   private final AwsService awsService;
 
-  public Function<Object, Object> sendReminder() {
+//  TODO: Do something here
+  public Function<Object, Object> proposeDate() {
     return scheduledEvent -> {
-      log.info("ACCOMMODATION DAO - Fetching entity where start date is tomorrow and state is reserved.");
-      List<Accommodation> accommodationList = accommodationDao.findWhereStartDateIsTomorrowAndStateIsReserved();
+      log.info("ACCOMMODATION DAO - Fetching entity where last modified is today and state is not available.");
+      List<Accommodation> accommodationList = accommodationDao.findWhereLastModifiedIsTodayAndStateIsNotAvailable();
       AccommodationsDTO accommodationsDTO = AccommodationsDTO.builder()
-              .type(ScheduledEmailType.REMINDER)
+              .type(ScheduledEmailType.PROPOSE_DATE)
               .accommodations(accommodationList)
               .build();
       String message;
@@ -40,7 +41,7 @@ public class ReminderSenderComponent {
       }
 
       awsService.sendMessageToQueue(message, accommodationsDTO.getClass().getSimpleName());
-      log.info("Reminding owner of accommodation request which will start date is tomorrow.");
+      log.info("Propose date for accommodation requests which are rejected today.");
       return scheduledEvent;
     };
   }

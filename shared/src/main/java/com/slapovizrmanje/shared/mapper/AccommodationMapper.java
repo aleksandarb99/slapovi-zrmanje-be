@@ -51,6 +51,7 @@ public interface AccommodationMapper {
             .createdAt(Long.parseLong(item.get("created_at").n()))
             .startDate(LocalDate.parse(item.get("start_date").s()))
             .endDate(LocalDate.parse(item.get("end_date").s()))
+            .lastModified(LocalDate.parse(item.get("last_modified").s()))
             .build();
   }
 
