@@ -1,6 +1,7 @@
 package com.slapovizrmanje.api.util;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.shared.dto.GuestsDTO;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -57,4 +58,49 @@ public class Validator {
     }
   }
 
+
+  public static void validateCapacity(GuestsDTO guests, Map<String, Integer> lodging) {
+    int guestCount = countGuests(guests);
+    int capacityCount = countLodgingCapacity(lodging);
+    if (guestCount > capacityCount) {
+      throw new BadRequestException(String.format("Request contains %s people but selected" +
+              " lodging max capacity is %s.", guestCount, capacityCount));
+    }
+  }
+
+  private static int countLodgingCapacity(Map<String, Integer> lodging) {
+    int totalCount = 0;
+
+    int apartment1 = lodging.get("apartment1");
+    if (apartment1 != 0) {
+      totalCount += apartment1 * AccommodationCapacity.apartment1Capacity;
+    }
+
+    int room1 = lodging.get("room1");
+    if (apartment1 != 0) {
+      totalCount += room1 * AccommodationCapacity.room1Capacity;
+    }
+
+    int room2 = lodging.get("room2");
+    if (room2 != 0) {
+      totalCount += room2 * AccommodationCapacity.room2Capacity;
+    }
+
+    int room3 = lodging.get("room3");
+    if (room3 != 0) {
+      totalCount += room3 * AccommodationCapacity.room3Capacity;
+    }
+//    TODO: Finish this
+
+    return totalCount;
+  }
+
+  private static int countGuests(GuestsDTO guests) {
+    int totalCount = 0;
+
+    totalCount += guests.getAdults();
+//    TODO: Finish this
+
+    return totalCount;
+  }
 }

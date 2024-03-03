@@ -31,6 +31,9 @@ public class AccommodationService {
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
 
+    //    TODO: Test this
+    Validator.validateCapacity(requestDTO.getGuests(), requestDTO.getLodging());
+
     log.info(String.format("ACCOMMODATION MAPPER - Convert to entity %s.", requestDTO));
     Accommodation accommodation = accommodationMapper.toEntity(requestDTO);
     accommodation.setId(UUID.randomUUID().toString());

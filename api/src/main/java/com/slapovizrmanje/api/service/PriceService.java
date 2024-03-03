@@ -1,18 +1,17 @@
 package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.api.util.AccommodationCapacity;
 import com.slapovizrmanje.api.util.Prices;
 import com.slapovizrmanje.api.util.Validator;
-import com.slapovizrmanje.shared.dto.CampPriceRequestDTO;
-import com.slapovizrmanje.shared.dto.PriceItemDTO;
-import com.slapovizrmanje.shared.dto.PriceResponseDTO;
-import com.slapovizrmanje.shared.dto.RoomOrApartmentPriceRequestDTO;
+import com.slapovizrmanje.shared.dto.*;
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
@@ -41,12 +40,12 @@ public class PriceService {
     Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
+    //    TODO: Test this
+    Validator.validateCapacity(requestDTO.getGuests(), requestDTO.getLodging());
 
     if (!requestDTO.getType().equals(AccommodationType.APARTMENT) && !requestDTO.getType().equals(AccommodationType.ROOM)) {
       throw new BadRequestException("Request type is not valid");
     }
-
-//    TODO: Validate does that number of people can be in that rooms; Do this too in check availability
 
     PriceResponseDTO responseDTO = PriceResponseDTO.builder()
             .priceItems(new ArrayList<>())
