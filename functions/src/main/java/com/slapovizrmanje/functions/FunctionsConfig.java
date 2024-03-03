@@ -32,34 +32,40 @@ public class FunctionsConfig {
   public Function<Object, Object> proposeDate(final ProposeDateComponent proposeDateComponent) {
     return proposeDateComponent.proposeDate();
   }
+
   @Bean
   public Function<Object, Object> sendReminder(final ReminderSenderComponent reminderSenderComponent) {
     return reminderSenderComponent.sendReminder();
   }
+
   @Bean
   public Function<SQSEvent, SQSEvent> sendEmailNotification(final EmailNotificationSenderComponent emailNotificationSenderComponent) {
     return emailNotificationSenderComponent.sendEmailNotification();
   }
+
   @Bean
   public Function<DynamodbEvent, DynamodbEvent> handleDynamoStreamEvent(final DynamoStreamTriggerComponent dynamoStreamTriggerComponent) {
     return dynamoStreamTriggerComponent.handleDynamoStreamEvent();
   }
+
   @Bean
   public ObjectMapper objectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     return objectMapper;
   }
+
   @Bean
   public AmazonSimpleEmailService sesClient() {
     return AmazonSimpleEmailServiceClientBuilder.standard()
             .withRegion(Regions.EU_CENTRAL_1)
             .build();
   }
+
   public static void main(final String[] args) {
 //    testEmailLambda();
 //    testContactEmailLambda();
-      testScheduledEmailLambda();
+    testScheduledEmailLambda();
 //    testDynamoLambda();
   }
 

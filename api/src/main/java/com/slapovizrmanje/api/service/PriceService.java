@@ -1,10 +1,12 @@
 package com.slapovizrmanje.api.service;
 
+import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.api.util.Prices;
 import com.slapovizrmanje.api.util.Validator;
-import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
+import com.slapovizrmanje.shared.dto.CampPriceRequestDTO;
 import com.slapovizrmanje.shared.dto.PriceItemDTO;
 import com.slapovizrmanje.shared.dto.PriceResponseDTO;
+import com.slapovizrmanje.shared.dto.RoomOrApartmentPriceRequestDTO;
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +20,8 @@ import static java.time.temporal.ChronoUnit.DAYS;
 @Service
 @RequiredArgsConstructor
 public class PriceService {
-  public PriceResponseDTO checkPrice(AccommodationRequestDTO requestDTO) {
+
+  public PriceResponseDTO checkPriceForCamp(CampPriceRequestDTO requestDTO) {
     Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
@@ -29,9 +32,28 @@ public class PriceService {
 
     long numberOfNights = DAYS.between(requestDTO.getStartDate(), requestDTO.getEndDate());
 
-    if (requestDTO.getType().equals(AccommodationType.CAMP)) {
-      calculatePriceForCamp(requestDTO, responseDTO, numberOfNights);
+    calculatePriceForCamp(requestDTO, responseDTO, numberOfNights);
+
+    return responseDTO;
+  }
+
+  public PriceResponseDTO checkPriceForRoomOrApartment(RoomOrApartmentPriceRequestDTO requestDTO) {
+    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
+    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
+    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
+
+    if (!requestDTO.getType().equals(AccommodationType.APARTMENT) && !requestDTO.getType().equals(AccommodationType.ROOM)) {
+      throw new BadRequestException("Request type is not valid");
     }
+
+//    TODO: Validate does that number of people can be in that rooms; Do this too in check availability
+
+    PriceResponseDTO responseDTO = PriceResponseDTO.builder()
+            .priceItems(new ArrayList<>())
+            .build();
+
+    long numberOfNights = DAYS.between(requestDTO.getStartDate(), requestDTO.getEndDate());
+
     if (requestDTO.getType().equals(AccommodationType.APARTMENT)) {
       calculatePriceForApartment(requestDTO, responseDTO, numberOfNights);
     }
@@ -42,9 +64,9 @@ public class PriceService {
     return responseDTO;
   }
 
-  private void calculatePriceForCamp(AccommodationRequestDTO accommodationRequestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
+  private void calculatePriceForCamp(CampPriceRequestDTO request, PriceResponseDTO responseDTO, long numberOfNights) {
     double totalPrice = 0;
-    int adults = accommodationRequestDTO.getGuests().getAdults();
+    int adults = request.getGuests().getAdults();
     if (adults != 0) {
       double price = Prices.adultsPrice * numberOfNights * adults;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -56,7 +78,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int children = accommodationRequestDTO.getGuests().getChildren();
+    int children = request.getGuests().getChildren();
     if (children != 0) {
       double price = Prices.childrenPrice * numberOfNights * children;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -68,7 +90,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int infants = accommodationRequestDTO.getGuests().getInfants();
+    int infants = request.getGuests().getInfants();
     if (infants != 0) {
       double price = Prices.infantsPrice * numberOfNights * infants;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -80,7 +102,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int pets = accommodationRequestDTO.getGuests().getPets();
+    int pets = request.getGuests().getPets();
     if (pets != 0) {
       double price = Prices.petsPrice * numberOfNights * pets;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -92,7 +114,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int caravan = accommodationRequestDTO.getLodging().get("caravan");
+    int caravan = request.getLodging().get("caravan");
     if (caravan != 0) {
       double price = Prices.caravanPrice * numberOfNights * caravan;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -104,7 +126,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int tent = accommodationRequestDTO.getLodging().get("tent");
+    int tent = request.getLodging().get("tent");
     if (tent != 0) {
       double price = Prices.tentPrice * numberOfNights * tent;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -116,7 +138,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int car = accommodationRequestDTO.getLodging().get("car");
+    int car = request.getLodging().get("car");
     if (car != 0) {
       double price = Prices.carPrice * numberOfNights * car;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -128,7 +150,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    int sleepingBag = accommodationRequestDTO.getLodging().get("sleepingBag");
+    int sleepingBag = request.getLodging().get("sleepingBag");
     if (sleepingBag != 0) {
       double price = Prices.sleepingBagPrice * numberOfNights * sleepingBag;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
@@ -140,7 +162,7 @@ public class PriceService {
       totalPrice += price;
       responseDTO.getPriceItems().add(itemDTO);
     }
-    if (accommodationRequestDTO.isPowerSupply()) {
+    if (request.isPowerSupply()) {
       double price = Prices.powerSupplyCost;
       PriceItemDTO itemDTO = PriceItemDTO.builder()
               .name("PowerSupply")
@@ -155,7 +177,7 @@ public class PriceService {
     responseDTO.setTotalPrice(totalPrice);
   }
 
-  private void calculatePriceForApartment(AccommodationRequestDTO requestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
+  private void calculatePriceForApartment(RoomOrApartmentPriceRequestDTO requestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
     int apartment1 = requestDTO.getLodging().get("apartment1");
     double totalPrice = 0;
     if (apartment1 != 0) {
@@ -173,7 +195,7 @@ public class PriceService {
     responseDTO.setTotalPrice(totalPrice);
   }
 
-  private void calculatePriceForRoom(AccommodationRequestDTO requestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
+  private void calculatePriceForRoom(RoomOrApartmentPriceRequestDTO requestDTO, PriceResponseDTO responseDTO, long numberOfNights) {
     double totalPrice = 0;
     int room1 = requestDTO.getLodging().get("room1");
     if (room1 != 0) {

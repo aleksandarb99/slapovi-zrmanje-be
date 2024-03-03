@@ -3,9 +3,7 @@ package com.slapovizrmanje.api.controller;
 import com.slapovizrmanje.api.service.AccommodationService;
 import com.slapovizrmanje.api.service.ContactService;
 import com.slapovizrmanje.api.service.PriceService;
-import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
-import com.slapovizrmanje.shared.dto.ContactQuestionDTO;
-import com.slapovizrmanje.shared.dto.PriceResponseDTO;
+import com.slapovizrmanje.shared.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +57,16 @@ public class AccommodationController {
     accommodationService.checkAvailability(accommodationRequestDTO);
   }
 
-  @PostMapping("/check-price")
-  public PriceResponseDTO checkPrice(@Valid @RequestBody AccommodationRequestDTO accommodationRequestDTO) {
-    log.info("PRICE SERVICE - Check price.");
-    return priceService.checkPrice(accommodationRequestDTO);
+  @PostMapping("/check-price/camp")
+  public PriceResponseDTO checkPriceForCamp(@Valid @RequestBody CampPriceRequestDTO requestDTO) {
+    log.info("PRICE SERVICE - Check price for camp.");
+    return priceService.checkPriceForCamp(requestDTO);
+  }
+
+  @PostMapping("/check-price/room-or-apartment")
+  public PriceResponseDTO checkPriceForRoomOrApartment(@Valid @RequestBody RoomOrApartmentPriceRequestDTO requestDTO) {
+    log.info("PRICE SERVICE - Check price for room or apartment.");
+    return priceService.checkPriceForRoomOrApartment(requestDTO);
   }
 
   @PostMapping("/get-in-touch")

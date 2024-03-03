@@ -247,7 +247,7 @@ public class EmailNotificationSenderComponent {
     int requestCounter = 1;
     StringBuilder proposeSummaryBuilder = new StringBuilder();
     String starter = accommodations.getType().equals(ScheduledEmailType.PROPOSE_DATE) ? "Zahtev" : "Rezervacija";
-    for (Accommodation accommodation: accommodations.getAccommodations()) {
+    for (Accommodation accommodation : accommodations.getAccommodations()) {
       proposeSummaryBuilder.append(String.format("<br/><b>%s %d<br/>", starter, requestCounter));
       proposeSummaryBuilder.append("_".repeat(60));
       proposeSummaryBuilder.append("</b><br/>");
