@@ -71,22 +71,22 @@ public class Validator {
   private static int countLodgingCapacity(Map<String, Integer> lodging) {
     int totalCount = 0;
 
-    int apartment1 = lodging.get("apartment1");
+    int apartment1 = lodging.getOrDefault("apartment1", 0);
     if (apartment1 != 0) {
       totalCount += apartment1 * AccommodationCapacity.apartment1Capacity;
     }
 
-    int room1 = lodging.get("room1");
-    if (apartment1 != 0) {
+    int room1 = lodging.getOrDefault("room1", 0);
+    if (room1 != 0) {
       totalCount += room1 * AccommodationCapacity.room1Capacity;
     }
 
-    int room2 = lodging.get("room2");
+    int room2 = lodging.getOrDefault("room2", 0);
     if (room2 != 0) {
       totalCount += room2 * AccommodationCapacity.room2Capacity;
     }
 
-    int room3 = lodging.get("room3");
+    int room3 = lodging.getOrDefault("room3", 0);
     if (room3 != 0) {
       totalCount += room3 * AccommodationCapacity.room3Capacity;
     }
