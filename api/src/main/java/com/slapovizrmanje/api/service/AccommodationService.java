@@ -32,7 +32,7 @@ public class AccommodationService {
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
 
     //    TODO: Test this
-    Validator.validateCapacity(requestDTO.getType(), requestDTO.getLodging(), requestDTO.getGuests());
+    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests());
 
     log.info(String.format("ACCOMMODATION MAPPER - Convert to entity %s.", requestDTO));
     Accommodation accommodation = accommodationMapper.toEntity(requestDTO);

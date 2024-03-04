@@ -2,8 +2,6 @@ package com.slapovizrmanje.api.util;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.shared.dto.GuestsDTO;
-import com.slapovizrmanje.shared.dto.RoomOrApartmentPriceRequestDTO;
-import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
@@ -61,42 +59,37 @@ public class Validator {
   }
 
 
-  public static void validateCapacity(AccommodationType type, Map<String, Integer> lodging, GuestsDTO guests) {
+  public static void validateCapacity(Map<String, Integer> lodging, GuestsDTO guests) {
     int guestCount = countGuests(guests);
-    int capacityCount = countLodgingCapacity(type, lodging);
+    int capacityCount = countLodgingCapacity(lodging);
     if (guestCount > capacityCount) {
       throw new BadRequestException(String.format("Request contains %s people but selected" +
               " lodging max capacity is %s.", guestCount, capacityCount));
     }
   }
 
-  private static int countLodgingCapacity(AccommodationType type, Map<String, Integer> lodging) {
+  private static int countLodgingCapacity(Map<String, Integer> lodging) {
     int totalCount = 0;
 
-    if (type.equals(AccommodationType.APARTMENT)) {
-      int apartment1 = lodging.get("apartment1");
-      if (apartment1 != 0) {
-        totalCount += apartment1 * AccommodationCapacity.apartment1Capacity;
-      }
+    int apartment1 = lodging.getOrDefault("apartment1", 0);
+    if (apartment1 != 0) {
+      totalCount += apartment1 * AccommodationCapacity.apartment1Capacity;
     }
 
-    if (type.equals(AccommodationType.ROOM)) {
-      int room1 = lodging.get("room1");
-      if (room1 != 0) {
-        totalCount += room1 * AccommodationCapacity.room1Capacity;
-      }
-
-      int room2 = lodging.get("room2");
-      if (room2 != 0) {
-        totalCount += room2 * AccommodationCapacity.room2Capacity;
-      }
-
-      int room3 = lodging.get("room3");
-      if (room3 != 0) {
-        totalCount += room3 * AccommodationCapacity.room3Capacity;
-      }
+    int room1 = lodging.getOrDefault("room1", 0);
+    if (room1 != 0) {
+      totalCount += room1 * AccommodationCapacity.room1Capacity;
     }
 
+    int room2 = lodging.getOrDefault("room2", 0);
+    if (room2 != 0) {
+      totalCount += room2 * AccommodationCapacity.room2Capacity;
+    }
+
+    int room3 = lodging.getOrDefault("room3", 0);
+    if (room3 != 0) {
+      totalCount += room3 * AccommodationCapacity.room3Capacity;
+    }
 //    TODO: Finish this
 
     return totalCount;
