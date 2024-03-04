@@ -59,7 +59,7 @@ public class Validator {
   }
 
 
-  public static void validateCapacity(GuestsDTO guests, Map<String, Integer> lodging) {
+  public static void validateCapacity(Map<String, Integer> lodging, GuestsDTO guests) {
     int guestCount = countGuests(guests);
     int capacityCount = countLodgingCapacity(lodging);
     if (guestCount > capacityCount) {
@@ -95,10 +95,10 @@ public class Validator {
     return totalCount;
   }
 
-  private static int countGuests(GuestsDTO guests) {
+  private static int countGuests(GuestsDTO guestsDTO) {
     int totalCount = 0;
 
-    totalCount += guests.getAdults();
+    totalCount += guestsDTO.getAdults();
 //    TODO: Finish this
 
     return totalCount;
