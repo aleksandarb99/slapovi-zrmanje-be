@@ -41,7 +41,7 @@ public class PriceService {
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
     //    TODO: Test this
-    Validator.validateCapacity(requestDTO.getGuests(), requestDTO.getLodging());
+    Validator.validateCapacity(requestDTO.getType(), requestDTO.getLodging(), requestDTO.getGuests());
 
     if (!requestDTO.getType().equals(AccommodationType.APARTMENT) && !requestDTO.getType().equals(AccommodationType.ROOM)) {
       throw new BadRequestException("Request type is not valid");

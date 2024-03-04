@@ -26,7 +26,8 @@ public class ControllerAdvisor {
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   @ExceptionHandler(DbErrorException.class)
   public ExceptionMessageDTO handleDbErrorException(final DbErrorException e) {
-    log.error(String.format("BadRequestException -> %s.", e));
+    log.error(String.format("DbErrorException -> %s.", e));
+    e.printStackTrace();
     return createExceptionMessage(e.getMessage());
   }
 
@@ -34,6 +35,7 @@ public class ControllerAdvisor {
   @ExceptionHandler({Exception.class})
   public ExceptionMessageDTO handleException(final Exception e) {
     log.error(String.format("Exception -> %s.", e));
+    e.printStackTrace();
     return createExceptionMessage(e.getMessage());
   }
 
