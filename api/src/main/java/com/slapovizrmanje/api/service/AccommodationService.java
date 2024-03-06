@@ -2,6 +2,8 @@ package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
 import com.slapovizrmanje.api.exception.NotFoundException;
+import com.slapovizrmanje.api.util.ExceptionMessageType;
+import com.slapovizrmanje.api.util.ExceptionMessages;
 import com.slapovizrmanje.api.util.TimeProvider;
 import com.slapovizrmanje.api.util.Validator;
 import com.slapovizrmanje.shared.dao.AccommodationDao;
@@ -9,6 +11,7 @@ import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
+import com.slapovizrmanje.shared.model.enums.Language;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,12 @@ public class AccommodationService {
   private final AccommodationDao accommodationDao;
 
   public void checkAvailability(AccommodationRequestDTO requestDTO) {
-    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
-    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
-    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
+    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests(), requestDTO.getLanguage());
+    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
+    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
 
     //    TODO: Test this
-    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests());
+    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
 
     log.info(String.format("ACCOMMODATION MAPPER - Convert to entity %s.", requestDTO));
     Accommodation accommodation = accommodationMapper.toEntity(requestDTO);
@@ -60,7 +63,7 @@ public class AccommodationService {
               .filter(filteredTime -> currentTime.minusMinutes(15).isBefore(filteredTime))
               .findAny()
               .ifPresent(s -> {
-                throw new BadRequestException("You have already raised a request.");
+                throw new BadRequestException(ExceptionMessages.getMessage(requestDTO.getLanguage(), ExceptionMessageType.BadRequestExceptionAlreadySentRequestMessage));
               });
     } else {
       log.info("There's no similar accommodation recorded.");
@@ -71,23 +74,23 @@ public class AccommodationService {
     log.info("Successfully created!");
   }
 
-  public void verifyEmail(String email, String id, String code) {
+  public void verifyEmail(String email, String id, String code, Language language) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email, id);
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
+      throw new NotFoundException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.NotFoundExceptionMessage), id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
+    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
     }
 
     accommodation.setState(AccommodationState.EMAIL_VERIFIED);
@@ -99,23 +102,23 @@ public class AccommodationService {
     log.info("Successfully verified!");
   }
 
-  public void reject(String email, String id, String code) {
+  public void reject(String email, String id, String code, Language language) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email, id);
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
+      throw new NotFoundException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.NotFoundExceptionMessage), id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
+    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
     }
 
     accommodation.setState(AccommodationState.NOT_AVAILABLE);
@@ -127,23 +130,23 @@ public class AccommodationService {
     log.info("Successfully rejected!");
   }
 
-  public void accept(String email, String id, String code) {
+  public void accept(String email, String id, String code, Language language) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email, id);
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with id the '%s' does not exist.", id));
+      throw new NotFoundException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.NotFoundExceptionMessage), id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
+    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
     }
 
     accommodation.setState(AccommodationState.AVAILABLE);
@@ -155,27 +158,27 @@ public class AccommodationService {
     log.info("Successfully accepted!");
   }
 
-  public void reserve(String email, String id, String code) {
+  public void reserve(String email, String id, String code, Language language) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email, id);
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
+      throw new NotFoundException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.NotFoundExceptionMessage), id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.AVAILABLE)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
+    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
     }
 
     if (!accommodation.getStartDate().isAfter(LocalDate.now())) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has start date which is not in the future.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionStartDateNotInTheFutureMessage), id));
     }
 
     accommodation.setState(AccommodationState.RESERVED);
@@ -187,27 +190,27 @@ public class AccommodationService {
     log.info("Successfully reserved!");
   }
 
-  public void cancel(String email, String id, String code) {
+  public void cancel(String email, String id, String code, Language language) {
     log.info("ACCOMMODATION DAO - Fetching by email and id pair.");
     List<Accommodation> foundEntities = accommodationDao.findByEmailAndIdPair(email, id);
     log.info(String.format("Found entities: %s", foundEntities));
 
     if (foundEntities.isEmpty()) {
-      throw new NotFoundException(String.format("Entity with the id '%s' does not exist.", id));
+      throw new NotFoundException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.NotFoundExceptionMessage), id));
     }
 
     Accommodation accommodation = foundEntities.get(0);
 
     if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' is in invalid state.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
     if (!accommodation.getCode().equals(code)) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has different code.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
     }
 
     if (!accommodation.getStartDate().minus(3, ChronoUnit.DAYS).isAfter(LocalDate.now())) {
-      throw new BadRequestException(String.format("Entity with the id '%s' has a start date that is less than 3 days in the future from now.", id));
+      throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionCannotCancelMessage), id));
     }
 
     accommodation.setState(AccommodationState.CANCELED);

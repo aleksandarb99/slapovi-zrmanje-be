@@ -29,7 +29,7 @@ public class AccommodationRequestDTO {
   private String lastName;
   @NotNull(message = "Field 'type' has to be provided")
   private AccommodationType type;
-  @NotNull(message = "Language has to be provided.")
+  @NotNull(message = "Field 'language' has to be provided")
   private Language language;
   @Valid
   @NotNull(message = "Field 'guests' has to be provided")

@@ -1,6 +1,7 @@
 package com.slapovizrmanje.shared.dto;
 
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
+import com.slapovizrmanje.shared.model.enums.Language;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomOrApartmentPriceRequestDTO {
+  @NotNull(message = "Field 'language' has to be provided")
+  private Language language;
   @NotNull(message = "Field 'type' has to be provided")
   private AccommodationType type;
   @Valid

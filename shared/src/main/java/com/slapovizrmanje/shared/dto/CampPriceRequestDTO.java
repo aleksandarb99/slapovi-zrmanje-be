@@ -1,5 +1,6 @@
 package com.slapovizrmanje.shared.dto;
 
+import com.slapovizrmanje.shared.model.enums.Language;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CampPriceRequestDTO {
+  @NotNull(message = "Field 'language' has to be provided")
+  private Language language;
   @Valid
   @NotNull(message = "Field 'guests' has to be provided")
   private GuestsDTO guests;

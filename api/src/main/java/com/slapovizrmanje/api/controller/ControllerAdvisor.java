@@ -28,6 +28,7 @@ public class ControllerAdvisor {
   public ExceptionMessageDTO handleDbErrorException(final DbErrorException e) {
     log.error(String.format("DbErrorException -> %s.", e));
     e.printStackTrace();
+
     return createExceptionMessage(e.getMessage());
   }
 
@@ -36,6 +37,7 @@ public class ControllerAdvisor {
   public ExceptionMessageDTO handleException(final Exception e) {
     log.error(String.format("Exception -> %s.", e));
     e.printStackTrace();
+
     return createExceptionMessage(e.getMessage());
   }
 
@@ -43,6 +45,10 @@ public class ControllerAdvisor {
   @ExceptionHandler({MethodArgumentNotValidException.class})
   protected ExceptionMessageDTO handleMethodArgumentNotValid(final MethodArgumentNotValidException e) {
     log.info(String.format("MethodArgumentNotValidException -> %s.", e));
+
+//    TODO: Something here i think
+//    TODO: Maybe just return all 3 languages in message and split them somehow. Then on frontend find what you need.
+
     return createExceptionMessage(e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
   }
 
