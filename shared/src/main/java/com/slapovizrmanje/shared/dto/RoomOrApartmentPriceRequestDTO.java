@@ -1,6 +1,7 @@
 package com.slapovizrmanje.shared.dto;
 
 import com.slapovizrmanje.shared.model.enums.AccommodationType;
+import com.slapovizrmanje.shared.model.enums.Language;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
@@ -17,18 +18,44 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoomOrApartmentPriceRequestDTO {
-  @NotNull(message = "Field 'type' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'type' has to be provided\"," +
+          "\"DE\": \"Feld 'Typ' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'vrsta' mora biti navedeno\"" +
+          "}")
   private AccommodationType type;
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'language' has to be provided\"," +
+          "\"DE\": \"Feld 'Sprache' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'jezik' mora biti navedeno\"" +
+          "}")
+  private Language language;
   @Valid
-  @NotNull(message = "Field 'guests' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'guests' has to be provided\"," +
+          "\"DE\": \"Feld 'Gäste' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'gosti' mora biti navedeno\"" +
+          "}")
   private GuestsDTO guests;
   @Valid
-  @NotNull(message = "Field 'lodging' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'lodging' has to be provided\"," +
+          "\"DE\": \"Feld 'Unterkunft' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'smještaj' mora biti navedeno\"" +
+          "}")
   private Map<String, Integer> lodging;
   @Future
-  @NotNull(message = "Field 'startDate' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'startDate' has to be provided\"," +
+          "\"DE\": \"Feld 'Startdatum' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'početniDatum' mora biti navedeno\"" +
+          "}")
   private LocalDate startDate;
   @Future
-  @NotNull(message = "Field 'endDate' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'endDate' has to be provided\"," +
+          "\"DE\": \"Feld 'Enddatum' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'završniDatum' mora biti navedeno\"" +
+          "}")
   private LocalDate endDate;
 }

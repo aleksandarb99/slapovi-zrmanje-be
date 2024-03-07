@@ -1,6 +1,8 @@
 package com.slapovizrmanje.api.service;
 
 import com.slapovizrmanje.api.exception.BadRequestException;
+import com.slapovizrmanje.api.util.ExceptionMessageType;
+import com.slapovizrmanje.api.util.ExceptionMessages;
 import com.slapovizrmanje.api.util.Prices;
 import com.slapovizrmanje.api.util.Validator;
 import com.slapovizrmanje.shared.dto.CampPriceRequestDTO;
@@ -22,9 +24,9 @@ import static java.time.temporal.ChronoUnit.DAYS;
 public class PriceService {
 
   public PriceResponseDTO checkPriceForCamp(CampPriceRequestDTO requestDTO) {
-    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
-    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
-    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
+    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests(), requestDTO.getLanguage());
+    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
+    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
 
     PriceResponseDTO responseDTO = PriceResponseDTO.builder()
             .priceItems(new ArrayList<>())
@@ -38,14 +40,14 @@ public class PriceService {
   }
 
   public PriceResponseDTO checkPriceForRoomOrApartment(RoomOrApartmentPriceRequestDTO requestDTO) {
-    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests());
-    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging());
-    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate());
+    Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests(), requestDTO.getLanguage());
+    Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
+    Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
     //    TODO: Test this
-    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests());
+    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
 
     if (!requestDTO.getType().equals(AccommodationType.APARTMENT) && !requestDTO.getType().equals(AccommodationType.ROOM)) {
-      throw new BadRequestException("Request type is not valid");
+      throw new BadRequestException(ExceptionMessages.getMessage(requestDTO.getLanguage(), ExceptionMessageType.BadRequestExceptionBadTypeMessage));
     }
 
     PriceResponseDTO responseDTO = PriceResponseDTO.builder()

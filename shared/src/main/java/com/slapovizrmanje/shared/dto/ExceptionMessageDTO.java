@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ExceptionMessageDTO {
+  private boolean alreadyTranslated;
   private LocalDateTime timestamp;
   private String message;
 }

@@ -28,6 +28,7 @@ public class ControllerAdvisor {
   public ExceptionMessageDTO handleDbErrorException(final DbErrorException e) {
     log.error(String.format("DbErrorException -> %s.", e));
     e.printStackTrace();
+
     return createExceptionMessage(e.getMessage());
   }
 
@@ -36,6 +37,7 @@ public class ControllerAdvisor {
   public ExceptionMessageDTO handleException(final Exception e) {
     log.error(String.format("Exception -> %s.", e));
     e.printStackTrace();
+
     return createExceptionMessage(e.getMessage());
   }
 
@@ -43,7 +45,9 @@ public class ControllerAdvisor {
   @ExceptionHandler({MethodArgumentNotValidException.class})
   protected ExceptionMessageDTO handleMethodArgumentNotValid(final MethodArgumentNotValidException e) {
     log.info(String.format("MethodArgumentNotValidException -> %s.", e));
-    return createExceptionMessage(e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    ExceptionMessageDTO dto = createExceptionMessage(e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    dto.setAlreadyTranslated(false);
+    return dto;
   }
 
   @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -56,6 +60,7 @@ public class ControllerAdvisor {
   private ExceptionMessageDTO createExceptionMessage(final String message) {
     return ExceptionMessageDTO.builder()
             .timestamp(LocalDateTime.now())
+            .alreadyTranslated(true)
             .message(message)
             .build();
   }

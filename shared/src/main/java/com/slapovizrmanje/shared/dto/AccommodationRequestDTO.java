@@ -20,28 +20,68 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccommodationRequestDTO {
-  @Email(regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "Invalid email address provided")
-  @NotBlank(message = "Field 'email' has to be provided")
+  @Email(regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", message = "{" +
+          "  \"EN\": \"Invalid email address provided\"," +
+          "  \"DE\": \"Ungültige E-Mail-Adresse angegeben\"," +
+          "  \"HR\": \"Navedena je nevažeća email adresa\"" +
+          "}")
+  @NotBlank(message = "{" +
+          "\"EN\": \"Field 'email' has to be provided\"," +
+          "\"DE\": \"Feld 'E-Mail' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'email' mora biti navedeno\"" +
+          "}")
   private String email;
-  @NotBlank(message = "Field 'firstName' has to be provided")
+  @NotBlank(message = "{" +
+          "\"EN\": \"Field 'firstName' has to be provided\"," +
+          "\"DE\": \"Feld 'Vorname' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'ime' mora biti navedeno\"" +
+          "}")
   private String firstName;
-  @NotBlank(message = "Field 'lastName' has to be provided")
+  @NotBlank(message = "{" +
+          "\"EN\": \"Field 'lastName' has to be provided\"," +
+          "\"DE\": \"Feld 'Familienname' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'prezime' mora biti navedeno\"" +
+          "}")
   private String lastName;
-  @NotNull(message = "Field 'type' has to be provided")
+  @NotNull(message = "{" +
+        "\"EN\": \"Field 'type' has to be provided\"," +
+        "\"DE\": \"Feld 'Typ' muss angegeben werden\"," +
+        "\"HR\": \"Polje 'vrsta' mora biti navedeno\"" +
+        "}")
   private AccommodationType type;
-  @NotNull(message = "Language has to be provided.")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'language' has to be provided\"," +
+          "\"DE\": \"Feld 'Sprache' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'jezik' mora biti navedeno\"" +
+          "}")
   private Language language;
   @Valid
-  @NotNull(message = "Field 'guests' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'guests' has to be provided\"," +
+          "\"DE\": \"Feld 'Gäste' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'gosti' mora biti navedeno\"" +
+          "}")
   private GuestsDTO guests;
   @Valid
-  @NotNull(message = "Field 'lodging' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'lodging' has to be provided\"," +
+          "\"DE\": \"Feld 'Unterkunft' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'smještaj' mora biti navedeno\"" +
+          "}")
   private Map<String, Integer> lodging;
   private boolean powerSupply;
   @Future
-  @NotNull(message = "Field 'startDate' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'startDate' has to be provided\"," +
+          "\"DE\": \"Feld 'Startdatum' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'početniDatum' mora biti navedeno\"" +
+          "}")
   private LocalDate startDate;
   @Future
-  @NotNull(message = "Field 'endDate' has to be provided")
+  @NotNull(message = "{" +
+          "\"EN\": \"Field 'endDate' has to be provided\"," +
+          "\"DE\": \"Feld 'Enddatum' muss angegeben werden\"," +
+          "\"HR\": \"Polje 'završniDatum' mora biti navedeno\"" +
+          "}")
   private LocalDate endDate;
 }
