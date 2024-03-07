@@ -57,7 +57,6 @@ public class Translator {
   private String yes;
   private String no;
 
-  //  TODO: Osmisli sve tekstove i prevedi ih na sve jezike
   public static final Translator englishTranslations = Translator.builder()
           .hello("Hello")
           .reserveHello("Hello, your request summary once again")

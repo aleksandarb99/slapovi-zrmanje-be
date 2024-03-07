@@ -21,8 +21,6 @@ public class AccommodationController {
   private final PriceService priceService;
   private final ContactService contactService;
 
-//  TODO: What to do with default error messages from framework
-
   @GetMapping("/cancel")
   public void cancel(@RequestParam String email, @RequestParam String id, @RequestParam String code, @RequestParam Language language) {
     log.info("ACCOMMODATION SERVICE - Cancel request.");
