@@ -93,17 +93,13 @@ public class Validator {
     if (room3 != 0) {
       totalCount += room3 * AccommodationCapacity.room3Capacity;
     }
-//    TODO: Finish this
 
     return totalCount;
   }
 
   private static int countGuests(GuestsDTO guestsDTO) {
     int totalCount = 0;
-
     totalCount += guestsDTO.getAdults();
-//    TODO: Finish this
-
     return totalCount;
   }
 }

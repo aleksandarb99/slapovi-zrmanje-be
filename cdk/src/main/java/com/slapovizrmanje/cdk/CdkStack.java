@@ -41,7 +41,6 @@ public class CdkStack extends Stack {
   public CdkStack(Construct scope, StackProps props, String frontendUrl) {
     super(scope, "slapovi-zrmanje-be", props);
 
-//    TODO: Da li da stavimo TTL na entitete
     // Create tables
     String accommodationTableArn = createAccommodationTable(this);
 

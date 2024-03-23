@@ -34,7 +34,6 @@ public class AccommodationService {
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
 
-    //    TODO: Test this
     Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
 
     log.info(String.format("ACCOMMODATION MAPPER - Convert to entity %s.", requestDTO));

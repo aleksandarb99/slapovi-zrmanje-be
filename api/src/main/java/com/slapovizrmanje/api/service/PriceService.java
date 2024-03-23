@@ -43,7 +43,6 @@ public class PriceService {
     Validator.validateObjectToContainAtLeastOnePositive(requestDTO.getGuests(), requestDTO.getLanguage());
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
-    //    TODO: Test this
     Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
 
     if (!requestDTO.getType().equals(AccommodationType.APARTMENT) && !requestDTO.getType().equals(AccommodationType.ROOM)) {
