@@ -11,6 +11,7 @@ import com.slapovizrmanje.shared.dto.AccommodationRequestDTO;
 import com.slapovizrmanje.shared.mapper.AccommodationMapper;
 import com.slapovizrmanje.shared.model.Accommodation;
 import com.slapovizrmanje.shared.model.enums.AccommodationState;
+import com.slapovizrmanje.shared.model.enums.AccommodationType;
 import com.slapovizrmanje.shared.model.enums.Language;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,9 @@ public class AccommodationService {
     Validator.validateMapToContainAtLeastOnePositive(requestDTO.getLodging(), requestDTO.getLanguage());
     Validator.validateStartEndDate(requestDTO.getStartDate(), requestDTO.getEndDate(), requestDTO.getLanguage());
 
-    Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
+    if (!requestDTO.getType().equals(AccommodationType.CAMP)) {
+      Validator.validateCapacity(requestDTO.getLodging(), requestDTO.getGuests(), requestDTO.getLanguage());
+    }
 
     log.info(String.format("ACCOMMODATION MAPPER - Convert to entity %s.", requestDTO));
     Accommodation accommodation = accommodationMapper.toEntity(requestDTO);
