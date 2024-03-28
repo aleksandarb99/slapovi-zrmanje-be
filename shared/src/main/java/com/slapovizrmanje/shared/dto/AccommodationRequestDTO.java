@@ -70,14 +70,22 @@ public class AccommodationRequestDTO {
           "}")
   private Map<String, Integer> lodging;
   private boolean powerSupply;
-  @Future
+  @Future(message = "{" +
+          "\"EN\": \"Field 'startDate' has to be in the future\"," +
+          "\"DE\": \"Feld 'Startdatum' muss in der Zukunft liegen\"," +
+          "\"HR\": \"Polje 'početniDatum' mora biti u budućnosti\"" +
+          "}")
   @NotNull(message = "{" +
           "\"EN\": \"Field 'startDate' has to be provided\"," +
           "\"DE\": \"Feld 'Startdatum' muss angegeben werden\"," +
           "\"HR\": \"Polje 'početniDatum' mora biti navedeno\"" +
           "}")
   private LocalDate startDate;
-  @Future
+  @Future(message = "{" +
+          "\"EN\": \"Field 'endDate' has to be in the future\"," +
+          "\"DE\": \"Feld 'Enddatum' muss in der Zukunft liegen\"," +
+          "\"HR\": \"Polje 'završniDatum' mora biti u budućnosti\"" +
+          "}")
   @NotNull(message = "{" +
           "\"EN\": \"Field 'endDate' has to be provided\"," +
           "\"DE\": \"Feld 'Enddatum' muss angegeben werden\"," +
