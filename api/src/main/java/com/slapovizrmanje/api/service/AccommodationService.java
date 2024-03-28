@@ -87,9 +87,12 @@ public class AccommodationService {
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+    if (!accommodation.getState().equals(AccommodationState.EMAIL_NOT_VERIFIED)) {
       throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
+
+    System.out.println(accommodation.getCode());
+    System.out.println(code);
 
     if (!accommodation.getCode().equals(code)) {
       throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidCodeMessage), id));
@@ -115,7 +118,7 @@ public class AccommodationService {
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
       throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
@@ -143,7 +146,7 @@ public class AccommodationService {
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+    if (!accommodation.getState().equals(AccommodationState.EMAIL_VERIFIED)) {
       throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
@@ -171,7 +174,7 @@ public class AccommodationService {
 
     Accommodation accommodation = foundEntities.get(0);
 
-    if (!accommodation.getState().equals(AccommodationState.RESERVED)) {
+    if (!accommodation.getState().equals(AccommodationState.AVAILABLE)) {
       throw new BadRequestException(String.format(ExceptionMessages.getMessage(language, ExceptionMessageType.BadRequestExceptionInvalidStateMessage), id));
     }
 
